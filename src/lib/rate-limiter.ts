@@ -70,11 +70,12 @@ interface TokenBucket {
  * In production, this should be replaced with Redis or similar distributed cache
  */
 class RateLimitStore {
-  private buckets: Map<string, TokenBucket> = new Map();
+  private buckets: Map<string, TokenBucket> | null = null;
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
     // Clean up expired entries every 5 minutes
+    this.buckets = new Map();
     this.cleanupInterval = setInterval(() => {
       this.cleanup();
     }, 5 * 60 * 1000);
@@ -84,6 +85,9 @@ class RateLimitStore {
    * Get or create a token bucket for the given key
    */
   getBucket(key: string, maxTokens: number, windowMs: number): TokenBucket {
+    if (!this.buckets) {
+      throw new Error("Rate limit store not initialized");
+    }
     let bucket = this.buckets.get(key);
     const now = Date.now();
 
@@ -142,19 +146,25 @@ class RateLimitStore {
     const now = Date.now();
     const keysToDelete: string[] = [];
 
+    if (!this.buckets) {
+      throw new Error("Rate limit store not initialized");
+    }
     for (const [key, bucket] of this.buckets.entries()) {
       if (now > bucket.resetTime + 60000) { // 1 minute grace period
         keysToDelete.push(key);
       }
     }
 
-    keysToDelete.forEach(key => this.buckets.delete(key));
+    keysToDelete.forEach(key => this.buckets?.delete(key));
   }
 
   /**
    * Clear all buckets (useful for testing)
    */
   clear(): void {
+    if (!this.buckets) {
+      throw new Error("Rate limit store not initialized");
+    }
     this.buckets.clear();
   }
 
@@ -182,7 +192,7 @@ const defaultKeyGenerator = (request: Request): string => {
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
 
   if (forwarded) {
-    return forwarded.split(',')[0]?.trim() || 'unknown';
+    return forwarded.split(',')[0]?.trim() ?? 'unknown';
   }
   if (realIp) {
     return realIp;
