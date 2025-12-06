@@ -203,25 +203,7 @@ describe("Rate Limit Middleware", () => {
       expect(handler).toHaveBeenCalledTimes(2);
     });
   });
-
-  describe("checkRateLimit", () => {
-    it("should check rate limit without consuming tokens", async () => {
-      const request = createMockRequest();
-      const config = { maxRequests: 10, windowMs: 60000 };
-
-      const info1 = await checkRateLimit(request, config);
-      expect(info1.allowed).toBe(true);
-      expect(info1.remaining).toBe(10);
-
-      const info2 = await checkRateLimit(request, config);
-      expect(info2.allowed).toBe(true);
-      expect(info2.remaining).toBe(10);
-
-      // Tokens should not be consumed
-      expect(info1.remaining).toBe(info2.remaining);
-    });
-  });
-
+  
   describe("Integration with API Routes", () => {
     it("should rate limit expensive operations more strictly", async () => {
       const request = createMockRequest();

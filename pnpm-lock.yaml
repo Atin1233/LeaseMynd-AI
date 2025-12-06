@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@clerk/nextjs':
         specifier: ^6.31.9
-        version: 6.31.9(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        version: 6.31.9(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@clerk/themes':
         specifier: ^2.4.29
         version: 2.4.29
@@ -31,7 +31,7 @@ importers:
         version: 0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
       '@langchain/langgraph':
         specifier: ^0.4.9
-        version: 0.4.9(@langchain/core@0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod-to-json-schema@3.24.6(zod@3.25.76))
+        version: 0.4.9(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod-to-json-schema@3.24.6(zod@3.25.76))
       '@langchain/openai':
         specifier: ^0.6.11
         version: 0.6.11(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(ws@8.18.3)
@@ -43,7 +43,7 @@ importers:
         version: 1.0.1
       '@uploadthing/react':
         specifier: ^7.3.3
-        version: 7.3.3(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(uploadthing@7.7.4(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17))
+        version: 7.3.3(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(uploadthing@7.7.4(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17))
       dayjs:
         specifier: ^1.11.18
         version: 1.11.18
@@ -55,7 +55,10 @@ importers:
         version: 2.2.7
       geist:
         specifier: ^1.5.1
-        version: 1.5.1(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
+        version: 1.5.1(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))
+      katex:
+        specifier: ^0.16.25
+        version: 0.16.25
       langchain:
         specifier: ^0.3.33
         version: 0.3.33(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(@opentelemetry/api@1.9.0)(axios@1.7.4)(handlebars@4.7.8)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)
@@ -64,7 +67,7 @@ importers:
         version: 0.542.0(react@19.2.1)
       next:
         specifier: ^15.5.7
-        version: 15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        version: 15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -92,9 +95,21 @@ importers:
       react-dom:
         specifier: ^19.2.1
         version: 19.2.1(react@19.2.1)
+      react-markdown:
+        specifier: ^9.0.0
+        version: 9.1.0(@types/react@19.1.12)(react@19.2.1)
       recharts:
         specifier: ^3.1.2
         version: 3.1.2(@types/react@19.1.12)(react-dom@19.2.1(react@19.2.1))(react-is@18.3.1)(react@19.2.1)(redux@5.0.1)
+      rehype-katex:
+        specifier: ^7.0.1
+        version: 7.0.1
+      remark-gfm:
+        specifier: ^4.0.0
+        version: 4.0.1
+      remark-math:
+        specifier: ^6.0.0
+        version: 6.0.0
       string-similarity-js:
         specifier: ^2.1.4
         version: 2.1.4
@@ -103,7 +118,7 @@ importers:
         version: 4.20.5
       uploadthing:
         specifier: ^7.7.4
-        version: 7.7.4(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17)
+        version: 7.7.4(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -6932,13 +6947,13 @@ snapshots:
       react-dom: 19.2.1(react@19.2.1)
       tslib: 2.8.1
 
-  '@clerk/nextjs@6.31.9(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+  '@clerk/nextjs@6.31.9(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@clerk/backend': 2.12.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@clerk/clerk-react': 5.46.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@clerk/shared': 3.24.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@clerk/types': 4.84.1
-      next: 15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
       server-only: 0.0.1
@@ -7719,22 +7734,22 @@ snapshots:
       '@langchain/core': 0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.1.1(@langchain/core@0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
+  '@langchain/langgraph-sdk@0.1.1(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
       p-retry: 4.6.2
       uuid: 9.0.1
     optionalDependencies:
-      '@langchain/core': 0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
+      '@langchain/core': 0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
 
-  '@langchain/langgraph@0.4.9(@langchain/core@0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod-to-json-schema@3.24.6(zod@3.25.76))':
+  '@langchain/langgraph@0.4.9(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)(zod-to-json-schema@3.24.6(zod@3.25.76))':
     dependencies:
-      '@langchain/core': 0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
-      '@langchain/langgraph-checkpoint': 0.1.1(@langchain/core@0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))
-      '@langchain/langgraph-sdk': 0.1.1(@langchain/core@0.3.74(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      '@langchain/core': 0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76))
+      '@langchain/langgraph-checkpoint': 0.1.1(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))
+      '@langchain/langgraph-sdk': 0.1.1(@langchain/core@0.3.74(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.18.3)(zod@3.25.76)))(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       uuid: 10.0.0
       zod: 3.25.76
     optionalDependencies:
@@ -8262,14 +8277,14 @@ snapshots:
 
   '@uploadthing/mime-types@0.3.6': {}
 
-  '@uploadthing/react@7.3.3(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(uploadthing@7.7.4(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17))':
+  '@uploadthing/react@7.3.3(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(react@19.2.1)(uploadthing@7.7.4(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17))':
     dependencies:
       '@uploadthing/shared': 7.1.10
       file-selector: 0.6.0
       react: 19.2.1
-      uploadthing: 7.7.4(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17)
+      uploadthing: 7.7.4(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17)
     optionalDependencies:
-      next: 15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
 
   '@uploadthing/shared@7.1.10':
     dependencies:
@@ -9449,9 +9464,9 @@ snapshots:
 
   functions-have-names@1.2.3: {}
 
-  geist@1.5.1(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)):
+  geist@1.5.1(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)):
     dependencies:
-      next: 15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
 
   gensync@1.0.0-beta.2: {}
 
@@ -9697,7 +9712,7 @@ snapshots:
       isstream: 0.1.2
       jsonwebtoken: 9.0.2
       mime-types: 2.1.35
-      retry-axios: 2.6.0(axios@1.7.4(debug@4.4.1))
+      retry-axios: 2.6.0(axios@1.7.4)
       tough-cookie: 4.1.4
     transitivePeerDependencies:
       - supports-color
@@ -10923,7 +10938,7 @@ snapshots:
   neo-async@2.6.2:
     optional: true
 
-  next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+  next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       '@next/env': 15.5.7
       '@swc/helpers': 0.5.15
@@ -10941,6 +10956,7 @@ snapshots:
       '@next/swc-linux-x64-musl': 15.5.7
       '@next/swc-win32-arm64-msvc': 15.5.7
       '@next/swc-win32-x64-msvc': 15.5.7
+      '@opentelemetry/api': 1.9.0
       '@playwright/test': 1.55.0
       sharp: 0.34.3
     transitivePeerDependencies:
@@ -11343,6 +11359,24 @@ snapshots:
 
   react-is@18.3.1: {}
 
+  react-markdown@9.1.0(@types/react@19.1.12)(react@19.2.1):
+    dependencies:
+      '@types/hast': 3.0.4
+      '@types/mdast': 4.0.4
+      '@types/react': 19.1.12
+      devlop: 1.1.0
+      hast-util-to-jsx-runtime: 2.3.6
+      html-url-attributes: 3.0.1
+      mdast-util-to-hast: 13.2.0
+      react: 19.2.1
+      remark-parse: 11.0.0
+      remark-rehype: 11.1.2
+      unified: 11.0.5
+      unist-util-visit: 5.0.0
+      vfile: 6.0.3
+    transitivePeerDependencies:
+      - supports-color
+
   react-redux@9.2.0(@types/react@19.1.12)(react@19.2.1)(redux@5.0.1):
     dependencies:
       '@types/use-sync-external-store': 0.0.6
@@ -11527,7 +11561,7 @@ snapshots:
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
-  retry-axios@2.6.0(axios@1.7.4(debug@4.4.1)):
+  retry-axios@2.6.0(axios@1.7.4):
     dependencies:
       axios: 1.7.4(debug@4.4.1)
 
@@ -11845,6 +11879,14 @@ snapshots:
       '@tokenizer/token': 0.3.0
       peek-readable: 4.1.0
 
+  style-to-js@1.1.21:
+    dependencies:
+      style-to-object: 1.0.14
+
+  style-to-object@1.0.14:
+    dependencies:
+      inline-style-parser: 0.2.7
+
   styled-jsx@5.1.6(@babel/core@7.28.5)(react@19.2.1):
     dependencies:
       client-only: 0.0.1
@@ -12149,7 +12191,7 @@ snapshots:
       escalade: 3.2.0
       picocolors: 1.1.1
 
-  uploadthing@7.7.4(next@15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17):
+  uploadthing@7.7.4(next@15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(tailwindcss@3.4.17):
     dependencies:
       '@effect/platform': 0.90.3(effect@3.17.7)
       '@standard-schema/spec': 1.0.0-beta.4
@@ -12157,7 +12199,7 @@ snapshots:
       '@uploadthing/shared': 7.1.10
       effect: 3.17.7
     optionalDependencies:
-      next: 15.5.7(@babel/core@7.28.5)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+      next: 15.5.7(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(@playwright/test@1.55.0)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       tailwindcss: 3.4.17
 
   uri-js@4.4.1:
