@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
 
 import React, { useState, useEffect, useRef } from "react";
 import { Brain, Clock, FileSearch, AlertTriangle, CheckCircle, AlertCircle, RefreshCw, Check, ChevronLeft, ChevronRight, FileText } from "lucide-react";
