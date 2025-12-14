@@ -104,7 +104,8 @@ export async function POST(request: Request) {
       async start(controller) {
         try {
           // Process the audio stream chunk by chunk
-          for await (const chunk of audioStream as AsyncIterable<Uint8Array | Buffer | ArrayBuffer>) {
+          // ElevenLabs stream is an AsyncIterable
+          for await (const chunk of audioStream as unknown as AsyncIterable<Uint8Array | Buffer | ArrayBuffer>) {
             // Convert chunk to Uint8Array if needed
             // ElevenLabs stream returns Buffer or Uint8Array chunks
             let chunkData: Uint8Array;

@@ -28,7 +28,7 @@ export function ConnectingScreen({ mode, fieldOfStudy }: ConnectingScreenProps) 
     const interval = setInterval(() => {
       setProgress((prev) => Math.min(prev + 25, 100));
       if (currentStatus < statuses.length) {
-        setStatusText(statuses[currentStatus]);
+        setStatusText(statuses[currentStatus] ?? "");
         currentStatus++;
       }
     }, 750);

@@ -1,5 +1,5 @@
 "use client";
-import { type Message } from "../page.tsx";
+import { type Message } from "../page";
 import { User, FileText } from "lucide-react";
 
 interface TeacherMessageProps {

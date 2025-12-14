@@ -89,10 +89,10 @@ export function WhiteboardPanel({ document }: WhiteboardPanelProps) {
     }
 
     ctx.beginPath();
-    ctx.moveTo(path.points[0].x, path.points[0].y);
+    ctx.moveTo(path.points[0]?.x ?? 0, path.points[0]?.y ?? 0);
     
     for (let i = 1; i < path.points.length; i++) {
-      ctx.lineTo(path.points[i].x, path.points[i].y);
+      ctx.lineTo(path.points[i]?.x ?? 0, path.points[i]?.y ?? 0);
     }
     
     ctx.stroke();
@@ -158,7 +158,7 @@ export function WhiteboardPanel({ document }: WhiteboardPanelProps) {
   const handleRedo = () => {
     if (historyStep < history.length - 1) {
       setHistoryStep(historyStep + 1);
-      setPaths(history[historyStep + 1]);
+      setPaths(history[historyStep + 1] ?? []);
     }
   };
 

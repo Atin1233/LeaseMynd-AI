@@ -216,7 +216,7 @@ function hasAnyEmotionTag(text: string): boolean {
 
 function extractFirstEmotionTag(text: string): EmotionTag | null {
   const m = /^\s*\[(happy|sad|angry|fearful|surprised|disgusted|excited|calm)\]/i.exec(text);
-  return m ? (m[1].toLowerCase() as EmotionTag) : null;
+  return m ? (m[1]?.toLowerCase() as EmotionTag) : null;
 }
 
 function stripEmotionTags(text: string): string {

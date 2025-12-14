@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import OpenAI from "openai";
-// @ts-expect-error - formdata-node types may not be fully recognized
 import { File } from "formdata-node";
 
 /**
