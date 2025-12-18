@@ -1,5 +1,4 @@
 "use client";
-import { useState } from "react";
 import type { Message, Document, StudyPlanItem } from "../page";
 import { BookOpen, CheckCircle2, Circle, FileText, Presentation, Eye, Menu } from "lucide-react";
 import { VoiceChat } from "./VoiceChat";

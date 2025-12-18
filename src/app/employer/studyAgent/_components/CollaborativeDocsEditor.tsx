@@ -50,7 +50,7 @@ export function CollaborativeDocsEditor({ document: docProp, isDark = false }: C
     // Initialize with welcome message
     if (!content) {
       setTimeout(() => {
-        const welcomeText = `# ${docProp?.name || "Collaborative Document"}\n\n*AI Teacher is here to help you learn*\n\n---\n\n`;
+        const welcomeText = `# ${docProp?.name ?? "Collaborative Document"}\n\n*AI Teacher is here to help you learn*\n\n---\n\n`;
         simulateAITyping(welcomeText);
       }, 500);
     }
@@ -73,7 +73,7 @@ export function CollaborativeDocsEditor({ document: docProp, isDark = false }: C
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${docProp?.name || "Document"}</title>
+  <title>${docProp?.name ?? "Document"}</title>
   <style>
     body {
       font-family: Georgia, serif;
@@ -93,7 +93,7 @@ export function CollaborativeDocsEditor({ document: docProp, isDark = false }: C
   </style>
 </head>
 <body>
-${editorRef.current?.innerHTML || content}
+${editorRef.current?.innerHTML ?? content}
 </body>
 </html>
     `.trim();
@@ -103,7 +103,7 @@ ${editorRef.current?.innerHTML || content}
     const url = URL.createObjectURL(blob);
     const a = window.document.createElement('a');
     a.href = url;
-    a.download = `${docProp?.name.replace(/\.pdf$/, '') || 'document'}-edited.html`;
+    a.download = `${docProp?.name.replace(/\.pdf$/, '') ?? 'document'}-edited.html`;
     window.document.body.appendChild(a);
     a.click();
     window.document.body.removeChild(a);
@@ -295,7 +295,7 @@ ${editorRef.current?.innerHTML || content}
             if (line.startsWith('*') && line.endsWith('*') && !line.includes('**')) {
               return <p key={index} className={`italic mb-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{line.slice(1, -1)}</p>;
             }
-            if (line.match(/^\d+\. /)) {
+            if (/^\d+\. /.exec(line)) {
               return <p key={index} className="mb-2 ml-4">{line}</p>;
             }
             if (line.includes('**')) {

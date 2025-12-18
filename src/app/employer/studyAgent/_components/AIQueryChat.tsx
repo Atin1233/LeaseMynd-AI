@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { AIChatbotSelector, AIModel } from "./AIChatbotSelector";
+import { AIChatbotSelector, type AIModel } from "./AIChatbotSelector";
 
 interface AIMessage {
   id: string;

@@ -1,7 +1,7 @@
 "use client";
 
 import { Resizable } from "re-resizable";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface ResizablePanelProps {
   children: ReactNode;
