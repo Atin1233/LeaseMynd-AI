@@ -1,3 +1,10 @@
+/**
+ * @deprecated This file is deprecated. Use the centralized RAG module instead:
+ * import { companyEnsembleSearch } from "~/server/rag";
+ * 
+ * This file is kept for backward compatibility but will be removed in a future version.
+ */
+
 import { db } from "~/server/db/index";
 import { eq, sql } from "drizzle-orm";
 import { pdfChunks, document } from "~/server/db/schema";

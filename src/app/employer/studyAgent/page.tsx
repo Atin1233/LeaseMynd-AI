@@ -96,13 +96,34 @@ export default function App() {
         setDocumentsLoading(true);
         setDocumentsError(null);
         
-        const response = await fetch("/api/study-agent/documents");
+        const response = await fetch("/api/fetchDocument", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: "current" }), // userId is obtained from auth on server
+        });
         
         if (!response.ok) {
           throw new Error("Failed to fetch documents");
         }
         
-        const data = await response.json() as Document[];
+        // Transform the response to match Document interface
+        interface FetchDocumentResponse {
+          id: number;
+          title: string;
+          url: string;
+          category: string;
+          createdAt: string | Date;
+        }
+        const rawDocs = await response.json() as FetchDocumentResponse[];
+        const data: Document[] = rawDocs.map((doc) => ({
+          id: doc.id.toString(),
+          name: doc.title,
+          type: "pdf" as const,
+          url: doc.url,
+          folder: doc.category,
+          uploadedAt: new Date(doc.createdAt),
+        }));
+        
         setDocuments(data);
         console.log(`📚 [StudyAgent] Loaded ${data.length} documents from database`);
       } catch (error) {

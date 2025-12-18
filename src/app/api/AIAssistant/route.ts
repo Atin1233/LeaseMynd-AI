@@ -8,10 +8,10 @@ import ANNOptimizer from "../predictive-document-analysis/services/annOptimizer"
 import {
     companyEnsembleSearch,
     documentEnsembleSearch,
-    type CompanyEnsembleOptions,
-    type DocumentEnsembleOptions,
+    type CompanySearchOptions,
+    type DocumentSearchOptions,
     type SearchResult
-} from "./services";
+} from "~/server/rag";
 import { validateRequestBody, QuestionSchema } from "~/lib/validation";
 import { auth } from "@clerk/nextjs/server";
 import { qaRequestCounter, qaRequestDuration } from "~/server/metrics/registry";
@@ -243,7 +243,7 @@ export async function POST(request: Request) {
 
         try {
             if (searchScope === "company") {
-                const companyOptions: CompanyEnsembleOptions = {
+                const companyOptions: CompanySearchOptions = {
                     weights: [0.4, 0.6],
                     topK: 10,
                     companyId: numericCompanyId
@@ -256,7 +256,7 @@ export async function POST(request: Request) {
                     companyOptions
                 );
             } else if (searchScope === "document" && documentId) {
-                const documentOptions: DocumentEnsembleOptions = {
+                const documentOptions: DocumentSearchOptions = {
                     weights: [0.4, 0.6],
                     topK: 5,
                     documentId

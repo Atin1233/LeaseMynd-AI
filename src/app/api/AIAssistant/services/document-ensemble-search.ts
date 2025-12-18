@@ -1,3 +1,10 @@
+/**
+ * @deprecated This file is deprecated. Use the centralized RAG module instead:
+ * import { documentEnsembleSearch } from "~/server/rag";
+ * 
+ * This file is kept for backward compatibility but will be removed in a future version.
+ */
+
 import { db } from "~/server/db/index";
 import { eq, sql } from "drizzle-orm";
 import { pdfChunks } from "~/server/db/schema";
