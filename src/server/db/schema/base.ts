@@ -9,6 +9,7 @@ import {
     text,
     timestamp,
     varchar,
+    bigint,
 } from "drizzle-orm/pg-core";
 
 import { pgVector } from "~/server/db/pgVector";
@@ -25,7 +26,7 @@ export const users = pgTable(
         name: varchar("name", { length: 256 }).notNull(),
         email: varchar("email", { length: 256 }).notNull(),
         userId: varchar("userId", { length: 256 }).notNull().unique(),
-        companyId: integer("company_id")
+        companyId: bigint("company_id", { mode: "bigint" })
             .notNull()
             .references(() => company.id, { onDelete: "cascade" }),
         role: varchar("role", { length: 256 }).notNull(),
@@ -72,7 +73,7 @@ export const document = pgTable(
         url: varchar("url", { length: 256 }).notNull(),
         category: varchar("category", { length: 256 }).notNull(),
         title: varchar("title", { length: 256 }).notNull(),
-        companyId: integer("company_id")
+        companyId: bigint("company_id", { mode: "bigint" })
             .notNull()
             .references(() => company.id, { onDelete: "cascade" }),
         ocrEnabled: boolean("ocr_enabled").default(false),
@@ -104,7 +105,7 @@ export const category = pgTable(
     {
         id: serial("id").primaryKey(),
         name: varchar("name", { length: 256 }).notNull(),
-        companyId: integer("company_id")
+        companyId: bigint("company_id", { mode: "bigint" })
             .notNull()
             .references(() => company.id, { onDelete: "cascade" }),
         createdAt: timestamp("created_at", { withTimezone: true })
@@ -127,7 +128,7 @@ export const pdfChunks = pgTable(
     "pdf_chunks",
     {
         id: serial("id").primaryKey(),
-        documentId: integer("document_id")
+        documentId: bigint("document_id", { mode: "bigint" })
             .notNull()
             .references(() => document.id, { onDelete: "cascade" }),
         page: integer("page").notNull(),
@@ -154,11 +155,11 @@ export const pdfChunks = pgTable(
 // ============================================================================
 
 export const ChatHistory = pgTable(
-    "chatHistory",
+    "chat_history",
     {
         id: serial("id").primaryKey(),
         UserId: varchar("user_id", { length: 256 }).notNull(), // Clerk user ID
-        documentId: integer("document_id")
+        documentId: bigint("document_id", { mode: "bigint" })
             .notNull()
             .references(() => document.id, { onDelete: "cascade" }),
         documentTitle: varchar("document_title", { length: 256 }).notNull(),
@@ -195,7 +196,7 @@ export const predictiveDocumentAnalysisResults = pgTable(
     "predictive_document_analysis_results",
     {
         id: serial("id").primaryKey(),
-        documentId: integer("document_id")
+        documentId: bigint("document_id", { mode: "bigint" })
             .notNull()
             .references(() => document.id, { onDelete: "cascade" }),
         analysisType: varchar("analysis_type", { length: 256 }).notNull(),
@@ -218,7 +219,7 @@ export const documentReferenceResolution = pgTable(
     "document_reference_resolutions",
     {
         id: serial("id").primaryKey(),
-        companyId: integer("company_id")
+        companyId: bigint("company_id", { mode: "bigint" })
             .notNull()
             .references(() => company.id, { onDelete: "cascade" }),
         referenceName: varchar("reference_name", { length: 256 }).notNull(),

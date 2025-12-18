@@ -150,7 +150,7 @@ async function getCompanyChunks(companyId: number): Promise<ChunkRow[]> {
         })
         .from(pdfChunks)
         .innerJoin(document, eq(pdfChunks.documentId, document.id))
-        .where(eq(document.companyId, companyId.toString()));
+        .where(eq(document.companyId, companyId));
 
     return rows;
 }
