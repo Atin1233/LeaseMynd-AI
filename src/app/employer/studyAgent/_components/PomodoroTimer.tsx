@@ -1,18 +1,37 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, Clock, Coffee, Brain, Settings } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Play, Pause, RotateCcw, Clock, Coffee, Brain, Settings, SkipForward, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
 interface PomodoroTimerProps {
   isDark?: boolean;
+  onTimerUpdate?: (isRunning: boolean, phase: string, timeLeft: number) => void;
 }
 
-type TimerMode = "focus" | "shortBreak" | "longBreak";
+type TimerMode = "focus" | "shortBreak" | "longBreak" | "idle";
 
-export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
+interface PomodoroSession {
+  id: string;
+  phase: "work" | "short_break" | "long_break" | "idle";
+  isRunning: boolean;
+  isPaused: boolean;
+  endsAt?: string;
+  completedPomodoros: number;
+  totalWorkMinutes: number;
+  settings: {
+    workDuration: number;
+    shortBreakDuration: number;
+    longBreakDuration: number;
+    sessionsBeforeLongBreak: number;
+    autoStartBreaks: boolean;
+    autoStartWork: boolean;
+  };
+}
+
+export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerProps) {
   const [mode, setMode] = useState<TimerMode>("focus");
   const [focusDuration, setFocusDuration] = useState(25);
   const [shortBreakDuration, setShortBreakDuration] = useState(5);
@@ -24,7 +43,111 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
   const [completedSessions, setCompletedSessions] = useState(0);
   const [autoStartBreaks, setAutoStartBreaks] = useState(false);
   const [autoStartPomodoros, setAutoStartPomodoros] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Convert API phase to UI mode
+  const phaseToMode = (phase: string): TimerMode => {
+    switch (phase) {
+      case "work": return "focus";
+      case "short_break": return "shortBreak";
+      case "long_break": return "longBreak";
+      default: return "idle";
+    }
+  };
+
+  // Convert UI mode to API phase
+  const modeToPhase = (uiMode: TimerMode): "work" | "short_break" | "long_break" => {
+    switch (uiMode) {
+      case "focus": return "work";
+      case "shortBreak": return "short_break";
+      case "longBreak": return "long_break";
+      default: return "work";
+    }
+  };
+
+  // Sync with the backend
+  const syncWithBackend = useCallback(async () => {
+    try {
+      const response = await fetch("/api/study-agent/sync/pomodoro");
+      if (!response.ok) return;
+
+      const data = await response.json() as { 
+        success: boolean; 
+        session?: PomodoroSession;
+        timeRemaining?: string;
+      };
+      
+      if (data.success && data.session) {
+        const session = data.session;
+        
+        // Update local state from backend
+        if (session.settings) {
+          setFocusDuration(session.settings.workDuration);
+          setShortBreakDuration(session.settings.shortBreakDuration);
+          setLongBreakDuration(session.settings.longBreakDuration);
+          setSessionsBeforeLongBreak(session.settings.sessionsBeforeLongBreak);
+          setAutoStartBreaks(session.settings.autoStartBreaks);
+          setAutoStartPomodoros(session.settings.autoStartWork);
+        }
+
+        setCompletedSessions(session.completedPomodoros);
+        setIsRunning(session.isRunning && !session.isPaused);
+        
+        // Set mode from phase
+        const newMode = phaseToMode(session.phase);
+        if (newMode !== "idle") {
+          setMode(newMode);
+        }
+
+        // Calculate time remaining
+        if (session.endsAt && session.isRunning && !session.isPaused) {
+          const endsAt = new Date(session.endsAt);
+          const now = new Date();
+          const remainingMs = endsAt.getTime() - now.getTime();
+          if (remainingMs > 0) {
+            setTimeLeft(Math.ceil(remainingMs / 1000));
+          }
+        } else if (data.timeRemaining) {
+          const [mins, secs] = data.timeRemaining.split(":").map(Number);
+          if (!isNaN(mins) && !isNaN(secs)) {
+            setTimeLeft(mins * 60 + secs);
+          }
+        }
+
+        setLastSyncTime(new Date());
+      }
+    } catch (error) {
+      console.error("Error syncing pomodoro:", error);
+    }
+  }, []);
+
+  // Poll for updates every 2 seconds when running
+  useEffect(() => {
+    // Initial sync
+    void syncWithBackend();
+
+    // Set up polling
+    syncIntervalRef.current = setInterval(() => {
+      void syncWithBackend();
+    }, 2000);
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [syncWithBackend]);
+
+  // Notify parent of timer updates
+  useEffect(() => {
+    if (onTimerUpdate) {
+      onTimerUpdate(isRunning, mode, timeLeft);
+    }
+  }, [isRunning, mode, timeLeft, onTimerUpdate]);
 
   const getCurrentDuration = () => {
     switch (mode) {
@@ -34,9 +157,12 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
         return shortBreakDuration * 60;
       case "longBreak":
         return longBreakDuration * 60;
+      default:
+        return focusDuration * 60;
     }
   };
 
+  // Local countdown timer
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
@@ -62,19 +188,30 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
 
-  const handleTimerComplete = () => {
+  const handleTimerComplete = async () => {
     setIsRunning(false);
+    // Sync with backend to move to next phase
+    await syncAction("skip");
+  };
 
-    if (mode === "focus") {
-      setCompletedSessions((prev) => prev + 1);
-      // After 4 focus sessions, suggest long break
-      if ((completedSessions + 1) % sessionsBeforeLongBreak === 0) {
-        switchMode("longBreak");
-      } else {
-        switchMode("shortBreak");
+  // Sync action with backend
+  const syncAction = async (action: "start" | "pause" | "resume" | "stop" | "skip" | "configure", settings?: object) => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch("/api/study-agent/sync/pomodoro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, settings }),
+      });
+
+      if (response.ok) {
+        // Re-sync state from backend
+        await syncWithBackend();
       }
-    } else {
-      switchMode("focus");
+    } catch (error) {
+      console.error("Error syncing action:", error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -87,13 +224,33 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
     setIsRunning(false);
   };
 
-  const handlePlayPause = () => {
-    setIsRunning(!isRunning);
+  const handlePlayPause = async () => {
+    if (isRunning) {
+      await syncAction("pause");
+    } else {
+      await syncAction(timeLeft < getCurrentDuration() ? "resume" : "start");
+    }
   };
 
-  const handleReset = () => {
-    setIsRunning(false);
+  const handleReset = async () => {
+    await syncAction("stop");
     setTimeLeft(getCurrentDuration());
+  };
+
+  const handleSkip = async () => {
+    await syncAction("skip");
+  };
+
+  const handleSaveSettings = async () => {
+    await syncAction("configure", {
+      workDuration: focusDuration,
+      shortBreakDuration,
+      longBreakDuration,
+      sessionsBeforeLongBreak,
+      autoStartBreaks,
+      autoStartWork: autoStartPomodoros,
+    });
+    setShowSettings(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -112,12 +269,20 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
           : "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
       }`}
     >
+      {/* Sync indicator */}
+      {isSyncing && (
+        <div className="absolute top-2 right-2">
+          <Loader2 className="w-3 h-3 animate-spin text-purple-500" />
+        </div>
+      )}
+
       {/* Mode Selector */}
       <div className="flex gap-1 mb-3">
         <Button
           variant={mode === "focus" ? "default" : "outline"}
           size="sm"
           onClick={() => switchMode("focus")}
+          disabled={isRunning}
           className={`flex-1 h-8 text-xs ${
             mode === "focus"
               ? "bg-purple-600 hover:bg-purple-700 text-white"
@@ -133,6 +298,7 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
           variant={mode === "shortBreak" ? "default" : "outline"}
           size="sm"
           onClick={() => switchMode("shortBreak")}
+          disabled={isRunning}
           className={`flex-1 h-8 text-xs ${
             mode === "shortBreak"
               ? "bg-green-600 hover:bg-green-700 text-white"
@@ -148,6 +314,7 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
           variant={mode === "longBreak" ? "default" : "outline"}
           size="sm"
           onClick={() => switchMode("longBreak")}
+          disabled={isRunning}
           className={`flex-1 h-8 text-xs ${
             mode === "longBreak"
               ? "bg-blue-600 hover:bg-blue-700 text-white"
@@ -212,8 +379,15 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
               ? "Focus Time"
               : mode === "shortBreak"
               ? "Short Break"
-              : "Long Break"}
+              : mode === "longBreak"
+              ? "Long Break"
+              : "Ready"}
           </div>
+          {lastSyncTime && (
+            <div className={`text-[10px] mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+              Synced with buddy
+            </div>
+          )}
         </div>
       </div>
 
@@ -222,7 +396,8 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
         <Button
           variant="default"
           size="sm"
-          onClick={handlePlayPause}
+          onClick={() => void handlePlayPause()}
+          disabled={isSyncing}
           className={`flex-1 h-9 ${
             mode === "focus"
               ? "bg-purple-600 hover:bg-purple-700"
@@ -231,7 +406,9 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
               : "bg-blue-600 hover:bg-blue-700"
           } text-white`}
         >
-          {isRunning ? (
+          {isSyncing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : isRunning ? (
             <>
               <Pause className="w-4 h-4 mr-2" />
               Pause
@@ -246,7 +423,18 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleReset}
+          onClick={() => void handleSkip()}
+          disabled={isSyncing || !isRunning}
+          className={`h-9 w-9 p-0 ${isDark ? "text-gray-300" : ""}`}
+          title="Skip to next phase"
+        >
+          <SkipForward className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleReset()}
+          disabled={isSyncing}
           className={`h-9 w-9 p-0 ${isDark ? "text-gray-300" : ""}`}
         >
           <RotateCcw className="w-4 h-4" />
@@ -391,10 +579,23 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
                 </span>
               </label>
             </div>
+
+            {/* Save Settings Button */}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => void handleSaveSettings()}
+              disabled={isSyncing}
+              className="w-full h-8 text-xs bg-purple-600 hover:bg-purple-700 text-white mt-2"
+            >
+              {isSyncing ? (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              ) : null}
+              Save Settings
+            </Button>
           </div>
         </div>
       )}
     </div>
   );
 }
-

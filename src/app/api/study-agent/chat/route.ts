@@ -22,12 +22,37 @@ import {
   validateDocumentAccess,
   formatResultsForPrompt,
 } from "~/server/rag";
+import { runStudyBuddyAgent } from "../agentic/orchestrator";
+import type { StudyMode } from "../agentic/types";
 
 /**
  * Study Agent Chat API
  * Provides AI chat responses for the study agent with context awareness
- * Integrated with research learning agent capabilities
+ * Now integrated with the agentic workflow for tool-based actions
  */
+
+// Keywords that trigger the agentic workflow
+const AGENTIC_TRIGGERS = [
+  // Task management
+  "task", "todo", "to-do", "to do", "add a", "create a task", "mark as done",
+  "complete the", "my tasks", "what do i need", "finish", "finished",
+  // Pomodoro timer - expanded triggers
+  "pomodoro", "timer", "focus session", "start studying", "take a break",
+  "pause", "resume", "how much time", "time left", "stop timer", "skip break",
+  "start a timer", "start the timer", "stop the timer", "pause the timer",
+  "start a pomodoro", "start pomodoro", "begin a pomodoro", "start focus",
+  "let's focus", "let me focus", "focus time", "study session",
+  // Note-taking
+  "note", "write down", "remember this", "jot down", "save this", "my notes",
+  "find my", "search notes", "take a note", "add a note",
+  // Flashcards and quizzes
+  "flashcard", "flash card", "study cards", "memorize",
+  "quiz", "test me", "practice questions", "test my knowledge",
+  // Study planning
+  "study plan", "create a plan", "organize my study", "learning plan", "schedule",
+  // Progress tracking
+  "my progress", "how am i doing", "session summary",
+];
 
 // Research keywords for detecting research-type questions
 const RESEARCH_KEYWORDS = [
@@ -43,6 +68,14 @@ const RESEARCH_KEYWORDS = [
 
 // Introduction keywords
 const INTRO_KEYWORDS = ["introduce", "discuss the study materials", "study plan"];
+
+/**
+ * Check if message should use agentic workflow
+ */
+function shouldUseAgenticWorkflow(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  return AGENTIC_TRIGGERS.some((trigger) => lowerMessage.includes(trigger));
+}
 
 /**
  * Process and normalize AI response for TTS
@@ -113,6 +146,70 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // Check if we should use the agentic workflow
+    const useAgenticWorkflow = shouldUseAgenticWorkflow(message);
+
+    if (useAgenticWorkflow) {
+      console.log("🤖 [StudyAgent Chat API] Using AGENTIC workflow for this request");
+      
+      // Convert mode to agentic mode type
+      const agenticMode: StudyMode = mode === "teacher" ? "teacher" : "study-buddy";
+      
+      // Convert study plan to agentic format
+      const agenticStudyPlan = studyPlan?.map((item) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        objectives: [],
+        estimatedDuration: 30,
+        materials: item.materials,
+        completed: item.completed,
+        priority: "medium" as const,
+      }));
+
+      // Run the agentic workflow
+      const agentResponse = await runStudyBuddyAgent({
+        message,
+        mode: agenticMode,
+        userId,
+        fieldOfStudy,
+        selectedDocuments,
+        studyPlan: agenticStudyPlan,
+        conversationHistory: conversationHistory?.map((msg) => ({
+          role: msg.role === "user" ? "user" : "assistant",
+          content: msg.content,
+        })),
+      });
+
+      console.log("🤖 [StudyAgent Chat API] Agentic response generated:");
+      console.log("   Tools used:", agentResponse.toolsUsed.join(", ") || "none");
+      console.log("   Processing time:", agentResponse.processingTimeMs, "ms");
+      console.log("   Emotion:", agentResponse.emotion);
+
+      // Return the agentic response
+      return NextResponse.json(
+        {
+          response: agentResponse.response,
+          originalResponse: agentResponse.displayResponse,
+          emotion: agentResponse.emotion,
+          mode: agentResponse.mode,
+          // Include generated content for frontend to handle
+          flashcards: agentResponse.flashcards,
+          quiz: agentResponse.quiz,
+          conceptExplanation: agentResponse.conceptExplanation,
+          updatedStudyPlan: agentResponse.updatedStudyPlan,
+          toolsUsed: agentResponse.toolsUsed,
+          suggestedQuestions: agentResponse.suggestedQuestions,
+          // Indicate this was an agentic response
+          isAgenticResponse: true,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Standard chat flow for non-agentic requests
+    console.log("💬 [StudyAgent Chat API] Using STANDARD chat workflow");
 
     // Detect message intent
     const lowerMessage = message.toLowerCase();
@@ -214,6 +311,7 @@ export async function POST(request: Request) {
         originalResponse: displayScript,
         emotion,
         mode,
+        isAgenticResponse: false,
       },
       { status: 200 }
     );

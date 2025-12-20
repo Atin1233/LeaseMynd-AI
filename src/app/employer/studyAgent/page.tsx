@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sidebar } from "./_components/Sidebar";
 import { DocumentViewer } from "./_components/DocumentViewer";
 import { TeacherPanel } from "./_components/TeacherPanel";
@@ -88,6 +88,92 @@ export default function App() {
   const [studyPlan, setStudyPlan] = useState<StudyPlanItem[]>([]);
 
   const [notes, setNotes] = useState<Note[]>([]);
+
+  // Sync functions to keep UI in sync with backend
+  const syncNotes = useCallback(async () => {
+    try {
+      const response = await fetch("/api/study-agent/sync/notes");
+      if (response.ok) {
+        interface SyncNote {
+          id: string;
+          title: string;
+          content: string;
+          tags?: string[];
+          createdAt?: string | Date;
+          updatedAt?: string | Date;
+        }
+        const data = await response.json() as { success: boolean; notes?: SyncNote[] };
+        if (data.success && data.notes) {
+          const syncedNotes: Note[] = data.notes.map((n) => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            tags: n.tags ?? [],
+            createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
+            updatedAt: n.updatedAt ? new Date(n.updatedAt) : new Date(),
+          }));
+          setNotes(syncedNotes);
+          console.log(`📝 [StudyAgent] Synced ${syncedNotes.length} notes from backend`);
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing notes:", error);
+    }
+  }, []);
+
+  const syncTasks = useCallback(async () => {
+    try {
+      const response = await fetch("/api/study-agent/sync/tasks");
+      if (response.ok) {
+        interface SyncTask {
+          id: string;
+          title: string;
+          description?: string;
+          status?: string;
+          completed?: boolean;
+        }
+        const data = await response.json() as { success: boolean; tasks?: SyncTask[] };
+        if (data.success && data.tasks) {
+          // Convert tasks to study plan items
+          const taskItems: StudyPlanItem[] = data.tasks.map((t) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description ?? "",
+            completed: t.status === "completed" || t.completed === true,
+            materials: [],
+          }));
+          setStudyPlan((prev) => {
+            // Merge with existing items - don't replace, just add new ones
+            const existingIds = new Set(prev.map((p) => p.id));
+            const uniqueNewItems = taskItems.filter((item) => !existingIds.has(item.id));
+            // Update existing items
+            const updated = prev.map((item) => {
+              const taskUpdate = taskItems.find((t) => t.id === item.id);
+              return taskUpdate ? { ...item, ...taskUpdate } : item;
+            });
+            return [...updated, ...uniqueNewItems];
+          });
+          console.log(`📋 [StudyAgent] Synced ${taskItems.length} tasks from backend`);
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing tasks:", error);
+    }
+  }, []);
+
+  // Sync notes and tasks on mount and periodically
+  useEffect(() => {
+    void syncNotes();
+    void syncTasks();
+
+    // Set up periodic sync every 10 seconds
+    const syncInterval = setInterval(() => {
+      void syncNotes();
+      void syncTasks();
+    }, 10000);
+
+    return () => clearInterval(syncInterval);
+  }, [syncNotes, syncTasks]);
 
   // Fetch documents from database on mount
   useEffect(() => {
@@ -251,11 +337,43 @@ export default function App() {
   };
 
   const handleSendMessage = async (content: string) => {
+    // Extended response interface for agentic workflow
     interface ChatResponse {
       originalResponse?: string;
       response?: string;
       emotion?: string;
       mode?: string;
+      // Agentic response fields
+      isAgenticResponse?: boolean;
+      flashcards?: Array<{
+        id: string;
+        front: string;
+        back: string;
+        topic: string;
+        difficulty: string;
+        tags: string[];
+      }>;
+      quiz?: {
+        id: string;
+        title: string;
+        questions: Array<{
+          id: string;
+          question: string;
+          type: string;
+          options?: string[];
+          correctAnswer: string;
+          explanation: string;
+        }>;
+      };
+      updatedStudyPlan?: Array<{
+        id: string;
+        title: string;
+        description: string;
+        completed: boolean;
+        priority: string;
+      }>;
+      toolsUsed?: string[];
+      suggestedQuestions?: string[];
     }
 
     // Log the user message being sent
@@ -314,6 +432,47 @@ export default function App() {
       console.log("   Emotion:", data.emotion ?? "neutral");
       console.log("   Length:", aiResponse.length, "characters");
       console.log("   Mode:", data.mode ?? userPreferences?.mode);
+      
+      // Handle agentic response extras
+      if (data.isAgenticResponse) {
+        console.log("🤖 [StudyAgent] Agentic response detected!");
+        console.log("   Tools used:", data.toolsUsed?.join(", ") ?? "none");
+        
+        // Handle updated study plan from agent
+        if (data.updatedStudyPlan && data.updatedStudyPlan.length > 0) {
+          console.log("📋 [StudyAgent] Updating study plan with", data.updatedStudyPlan.length, "items");
+          const newItems: StudyPlanItem[] = data.updatedStudyPlan.map((item) => ({
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            completed: item.completed,
+            materials: [],
+          }));
+          setStudyPlan((prev) => {
+            // Merge with existing items
+            const existingIds = new Set(prev.map((p) => p.id));
+            const uniqueNewItems = newItems.filter((item) => !existingIds.has(item.id));
+            return [...prev, ...uniqueNewItems];
+          });
+        }
+        
+        // Handle flashcards - could add to a flashcard state in the future
+        if (data.flashcards && data.flashcards.length > 0) {
+          console.log("🃏 [StudyAgent] Generated", data.flashcards.length, "flashcards");
+          // Flashcards are included in the response for display/voice
+        }
+        
+        // Handle quiz - could add to a quiz state in the future
+        if (data.quiz) {
+          console.log("📝 [StudyAgent] Generated quiz:", data.quiz.title);
+          // Quiz is included in the response for display/voice
+        }
+        
+        // Log suggested follow-up questions
+        if (data.suggestedQuestions && data.suggestedQuestions.length > 0) {
+          console.log("💡 [StudyAgent] Suggested questions:", data.suggestedQuestions);
+        }
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -324,6 +483,10 @@ export default function App() {
         isVoice: true,
       };
       setMessages((prev) => [...prev, aiMessage]);
+
+      // Sync notes and tasks after agent response (they may have been modified)
+      await syncNotes();
+      await syncTasks();
     } catch (error) {
       console.error("Error getting AI response:", error);
       // Fallback to mock response if API fails
@@ -373,54 +536,186 @@ export default function App() {
     }
   };
 
-  const handleToggleStudyItem = (itemId: string) => {
+  const handleToggleStudyItem = async (itemId: string) => {
+    // Find the item to toggle
+    const item = studyPlan.find((i) => i.id === itemId);
+    const newStatus = !item?.completed;
+    
+    // Optimistically update locally
     setStudyPlan((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, completed: !item.completed } : item
+      prev.map((i) =>
+        i.id === itemId ? { ...i, completed: newStatus } : i
       )
     );
+
+    // Sync with backend
+    try {
+      await fetch("/api/study-agent/sync/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: newStatus ? "complete" : "update",
+          taskId: itemId,
+          data: { status: newStatus ? "completed" : "pending" },
+        }),
+      });
+    } catch (error) {
+      console.error("Error syncing task toggle:", error);
+    }
   };
 
-  const handleAddStudyItem = (item: Omit<StudyPlanItem, "id">) => {
+  const handleAddStudyItem = async (item: Omit<StudyPlanItem, "id">) => {
+    // Optimistically add locally
+    const tempId = Date.now().toString();
     const newItem: StudyPlanItem = {
       ...item,
-      id: Date.now().toString(),
+      id: tempId,
     };
     setStudyPlan((prev) => [...prev, newItem]);
+
+    // Sync with backend
+    try {
+      const response = await fetch("/api/study-agent/sync/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          data: {
+            title: item.title,
+            description: item.description,
+            status: item.completed ? "completed" : "pending",
+          },
+        }),
+      });
+      if (response.ok) {
+        await syncTasks(); // Refresh to get the real ID
+      }
+    } catch (error) {
+      console.error("Error syncing task to backend:", error);
+    }
   };
 
-  const handleEditStudyItem = (itemId: string, updates: Partial<StudyPlanItem>) => {
+  const handleEditStudyItem = async (itemId: string, updates: Partial<StudyPlanItem>) => {
+    // Optimistically update locally
     setStudyPlan((prev) =>
       prev.map((item) =>
         item.id === itemId ? { ...item, ...updates } : item
       )
     );
+
+    // Sync with backend
+    try {
+      await fetch("/api/study-agent/sync/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          taskId: itemId,
+          data: {
+            title: updates.title,
+            description: updates.description,
+            status: updates.completed ? "completed" : "pending",
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error syncing task update to backend:", error);
+    }
   };
 
-  const handleDeleteStudyItem = (itemId: string) => {
+  const handleDeleteStudyItem = async (itemId: string) => {
+    // Optimistically remove locally
     setStudyPlan((prev) => prev.filter((item) => item.id !== itemId));
+
+    // Sync with backend
+    try {
+      await fetch("/api/study-agent/sync/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          taskId: itemId,
+        }),
+      });
+    } catch (error) {
+      console.error("Error syncing task deletion to backend:", error);
+    }
   };
 
-  const handleAddNote = (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
+  const handleAddNote = async (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
+    // Optimistically add locally
+    const tempId = Date.now().toString();
     const newNote: Note = {
       ...note,
-      id: Date.now().toString(),
+      id: tempId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     setNotes((prev) => [...prev, newNote]);
+
+    // Sync with backend
+    try {
+      const response = await fetch("/api/study-agent/sync/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "create",
+          data: {
+            title: note.title,
+            content: note.content,
+            tags: note.tags,
+          },
+        }),
+      });
+      if (response.ok) {
+        await syncNotes(); // Refresh to get the real ID
+      }
+    } catch (error) {
+      console.error("Error syncing note to backend:", error);
+    }
   };
 
-  const handleUpdateNote = (noteId: string, updates: Partial<Note>) => {
+  const handleUpdateNote = async (noteId: string, updates: Partial<Note>) => {
+    // Optimistically update locally
     setNotes((prev) =>
       prev.map((note) =>
         note.id === noteId ? { ...note, ...updates, updatedAt: new Date() } : note
       )
     );
+
+    // Sync with backend
+    try {
+      await fetch("/api/study-agent/sync/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "update",
+          noteId,
+          data: updates,
+        }),
+      });
+    } catch (error) {
+      console.error("Error syncing note update to backend:", error);
+    }
   };
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = async (noteId: string) => {
+    // Optimistically remove locally
     setNotes((prev) => prev.filter((note) => note.id !== noteId));
+
+    // Sync with backend
+    try {
+      await fetch("/api/study-agent/sync/notes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete",
+          noteId,
+        }),
+      });
+    } catch (error) {
+      console.error("Error syncing note deletion to backend:", error);
+    }
   };
 
   // Render appropriate screen based on state
