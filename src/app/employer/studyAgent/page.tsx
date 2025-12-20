@@ -88,92 +88,8 @@ export default function App() {
   const [studyPlan, setStudyPlan] = useState<StudyPlanItem[]>([]);
 
   const [notes, setNotes] = useState<Note[]>([]);
-
-  // Sync functions to keep UI in sync with backend
-  const syncNotes = useCallback(async () => {
-    try {
-      const response = await fetch("/api/study-agent/sync/notes");
-      if (response.ok) {
-        interface SyncNote {
-          id: string;
-          title: string;
-          content: string;
-          tags?: string[];
-          createdAt?: string | Date;
-          updatedAt?: string | Date;
-        }
-        const data = await response.json() as { success: boolean; notes?: SyncNote[] };
-        if (data.success && data.notes) {
-          const syncedNotes: Note[] = data.notes.map((n) => ({
-            id: n.id,
-            title: n.title,
-            content: n.content,
-            tags: n.tags ?? [],
-            createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
-            updatedAt: n.updatedAt ? new Date(n.updatedAt) : new Date(),
-          }));
-          setNotes(syncedNotes);
-          console.log(`📝 [StudyAgent] Synced ${syncedNotes.length} notes from backend`);
-        }
-      }
-    } catch (error) {
-      console.error("Error syncing notes:", error);
-    }
-  }, []);
-
-  const syncTasks = useCallback(async () => {
-    try {
-      const response = await fetch("/api/study-agent/sync/tasks");
-      if (response.ok) {
-        interface SyncTask {
-          id: string;
-          title: string;
-          description?: string;
-          status?: string;
-          completed?: boolean;
-        }
-        const data = await response.json() as { success: boolean; tasks?: SyncTask[] };
-        if (data.success && data.tasks) {
-          // Convert tasks to study plan items
-          const taskItems: StudyPlanItem[] = data.tasks.map((t) => ({
-            id: t.id,
-            title: t.title,
-            description: t.description ?? "",
-            completed: t.status === "completed" || t.completed === true,
-            materials: [],
-          }));
-          setStudyPlan((prev) => {
-            // Merge with existing items - don't replace, just add new ones
-            const existingIds = new Set(prev.map((p) => p.id));
-            const uniqueNewItems = taskItems.filter((item) => !existingIds.has(item.id));
-            // Update existing items
-            const updated = prev.map((item) => {
-              const taskUpdate = taskItems.find((t) => t.id === item.id);
-              return taskUpdate ? { ...item, ...taskUpdate } : item;
-            });
-            return [...updated, ...uniqueNewItems];
-          });
-          console.log(`📋 [StudyAgent] Synced ${taskItems.length} tasks from backend`);
-        }
-      }
-    } catch (error) {
-      console.error("Error syncing tasks:", error);
-    }
-  }, []);
-
-  // Sync notes and tasks on mount and periodically
-  useEffect(() => {
-    void syncNotes();
-    void syncTasks();
-
-    // Set up periodic sync every 10 seconds
-    const syncInterval = setInterval(() => {
-      void syncNotes();
-      void syncTasks();
-    }, 10000);
-
-    return () => clearInterval(syncInterval);
-  }, [syncNotes, syncTasks]);
+  const [preferencesError, setPreferencesError] = useState<string | null>(null);
+  const [studyPlanError, setStudyPlanError] = useState<string | null>(null);
 
   // Fetch documents from database on mount
   useEffect(() => {
@@ -225,7 +141,90 @@ export default function App() {
     void fetchDocuments();
   }, []);
 
+  const mapServerGoal = (goal: any): StudyPlanItem => ({
+    id: goal.id?.toString?.() ?? goal.id ?? Date.now().toString(),
+    title: goal.title ?? "",
+    description: goal.description ?? "",
+    completed: Boolean(goal.completed),
+    materials: goal.materials ?? [],
+  });
+
+  const persistGoalUpdate = async (goalId: string, updates: Partial<StudyPlanItem>) => {
+    try {
+      const response = await fetch("/api/study-agent/me/study-goals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: goalId, ...updates }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update goal");
+      }
+
+      const data = await response.json();
+      if (data.goal) {
+        setStudyPlan((prev) =>
+          prev.map((item) => (item.id === goalId ? mapServerGoal(data.goal) : item))
+        );
+      }
+      setStudyPlanError(null);
+    } catch (error) {
+      console.error("Error saving study goal", error);
+      setStudyPlanError("We couldn't save your study goals. Changes are local only.");
+    }
+  };
+
+  const persistGoalCreate = async (item: StudyPlanItem) => {
+    try {
+      const response = await fetch("/api/study-agent/me/study-goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: item.title,
+          description: item.description,
+          materials: item.materials,
+          completed: item.completed,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create goal");
+      }
+
+      const data = await response.json();
+      if (data.goal) {
+        setStudyPlan((prev) =>
+          prev.map((goal) => (goal.id === item.id ? mapServerGoal(data.goal) : goal))
+        );
+      }
+      setStudyPlanError(null);
+    } catch (error) {
+      console.error("Error creating study goal", error);
+      setStudyPlanError("We couldn't save your study goals. Changes are local only.");
+    }
+  };
+
+  const persistGoalDelete = async (goalId: string) => {
+    try {
+      const response = await fetch("/api/study-agent/me/study-goals", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: goalId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete goal");
+      }
+      setStudyPlanError(null);
+    } catch (error) {
+      console.error("Error deleting study goal", error);
+      setStudyPlanError("We couldn't sync the removal with the server. Try again later.");
+    }
+  };
+
   const handleCompleteOnboarding = async (preferences: UserPreferences) => {
+    setPreferencesError(null);
+    setStudyPlanError(null);
     setUserPreferences(preferences);
     
     // Set selected document
@@ -246,6 +245,53 @@ export default function App() {
       };
     });
     setStudyPlan(initialPlan);
+
+    let planForSession: StudyPlanItem[] = initialPlan;
+    try {
+      const profileResponse = await fetch("/api/study-agent/me/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: preferences.name,
+          grade: preferences.grade,
+          gender: preferences.gender,
+          fieldOfStudy: preferences.fieldOfStudy,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        throw new Error("Failed to save profile");
+      }
+
+      const prefResponse = await fetch("/api/study-agent/me/preferences", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferences),
+      });
+
+      if (!prefResponse.ok) {
+        throw new Error("Failed to save preferences");
+      }
+
+      const goalsResponse = await fetch("/api/study-agent/me/study-goals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: initialPlan }),
+      });
+
+      if (!goalsResponse.ok) {
+        throw new Error("Failed to save study plan");
+      }
+
+      const goalData = await goalsResponse.json() as { goals?: StudyPlanItem[] };
+      if (Array.isArray(goalData.goals)) {
+        planForSession = goalData.goals.map(mapServerGoal);
+        setStudyPlan(planForSession);
+      }
+    } catch (error) {
+      console.error("Error saving onboarding data", error);
+      setPreferencesError("We couldn't save your study setup. We'll keep it local for now.");
+    }
 
     setAppState("connecting");
 
@@ -268,7 +314,7 @@ export default function App() {
           mode: preferences.mode ?? "teacher",
           fieldOfStudy: preferences.fieldOfStudy,
           selectedDocuments: preferences.selectedDocuments ?? [],
-          studyPlan: initialPlan,
+          studyPlan: planForSession,
           conversationHistory: [],
         }),
       });
@@ -536,32 +582,15 @@ export default function App() {
     }
   };
 
-  const handleToggleStudyItem = async (itemId: string) => {
-    // Find the item to toggle
-    const item = studyPlan.find((i) => i.id === itemId);
-    const newStatus = !item?.completed;
-    
-    // Optimistically update locally
-    setStudyPlan((prev) =>
-      prev.map((i) =>
-        i.id === itemId ? { ...i, completed: newStatus } : i
-      )
-    );
-
-    // Sync with backend
-    try {
-      await fetch("/api/study-agent/sync/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: newStatus ? "complete" : "update",
-          taskId: itemId,
-          data: { status: newStatus ? "completed" : "pending" },
-        }),
-      });
-    } catch (error) {
-      console.error("Error syncing task toggle:", error);
-    }
+  const handleToggleStudyItem = (itemId: string) => {
+    setStudyPlan((prev) => {
+      const target = prev.find((item) => item.id === itemId);
+      const nextCompleted = target ? !target.completed : false;
+      void persistGoalUpdate(itemId, { completed: nextCompleted });
+      return prev.map((item) =>
+        item.id === itemId ? { ...item, completed: nextCompleted } : item
+      );
+    });
   };
 
   const handleAddStudyItem = async (item: Omit<StudyPlanItem, "id">) => {
@@ -572,79 +601,24 @@ export default function App() {
       id: tempId,
     };
     setStudyPlan((prev) => [...prev, newItem]);
-
-    // Sync with backend
-    try {
-      const response = await fetch("/api/study-agent/sync/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "create",
-          data: {
-            title: item.title,
-            description: item.description,
-            status: item.completed ? "completed" : "pending",
-          },
-        }),
-      });
-      if (response.ok) {
-        await syncTasks(); // Refresh to get the real ID
-      }
-    } catch (error) {
-      console.error("Error syncing task to backend:", error);
-    }
+    void persistGoalCreate(newItem);
   };
 
-  const handleEditStudyItem = async (itemId: string, updates: Partial<StudyPlanItem>) => {
-    // Optimistically update locally
-    setStudyPlan((prev) =>
-      prev.map((item) =>
+  const handleEditStudyItem = (itemId: string, updates: Partial<StudyPlanItem>) => {
+    setStudyPlan((prev) => {
+      void persistGoalUpdate(itemId, updates);
+      return prev.map((item) =>
         item.id === itemId ? { ...item, ...updates } : item
-      )
-    );
-
-    // Sync with backend
-    try {
-      await fetch("/api/study-agent/sync/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "update",
-          taskId: itemId,
-          data: {
-            title: updates.title,
-            description: updates.description,
-            status: updates.completed ? "completed" : "pending",
-          },
-        }),
-      });
-    } catch (error) {
-      console.error("Error syncing task update to backend:", error);
-    }
+      );
+    });
   };
 
-  const handleDeleteStudyItem = async (itemId: string) => {
-    // Optimistically remove locally
+  const handleDeleteStudyItem = (itemId: string) => {
     setStudyPlan((prev) => prev.filter((item) => item.id !== itemId));
-
-    // Sync with backend
-    try {
-      await fetch("/api/study-agent/sync/tasks", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          taskId: itemId,
-        }),
-      });
-    } catch (error) {
-      console.error("Error syncing task deletion to backend:", error);
-    }
+    void persistGoalDelete(itemId);
   };
 
-  const handleAddNote = async (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
-    // Optimistically add locally
-    const tempId = Date.now().toString();
+  const handleAddNote = (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
     const newNote: Note = {
       ...note,
       id: tempId,
@@ -749,10 +723,11 @@ export default function App() {
     }
     
     return (
-      <OnboardingScreen 
+      <OnboardingScreen
         documents={documents}
         onComplete={handleCompleteOnboarding}
         onUploadDocument={handleUploadDocument}
+        errorMessage={preferencesError}
       />
     );
   }
@@ -844,6 +819,7 @@ export default function App() {
             onDeleteNote={handleDeleteNote}
             onToggleSidebar={() => setShowSidebar(!showSidebar)}
             isDark={isDark}
+            errorMessage={studyPlanError}
           />
         )}
       </ResizablePanel>
