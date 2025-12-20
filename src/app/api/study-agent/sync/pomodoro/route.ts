@@ -9,10 +9,16 @@ import { managePomodoro } from "../../agentic/tools/pomodoro-timer";
 
 export const runtime = "nodejs";
 
+function parseSessionId(request: Request) {
+  const sessionIdParam = new URL(request.url).searchParams.get("sessionId");
+  const parsedSessionId = sessionIdParam ? Number(sessionIdParam) : undefined;
+  return Number.isNaN(parsedSessionId) ? undefined : parsedSessionId;
+}
+
 /**
  * GET - Get current Pomodoro session state
  */
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -22,6 +28,7 @@ export async function GET() {
     const result = await managePomodoro({
       action: "status",
       userId,
+      sessionId: parseSessionId(request),
     });
 
     return NextResponse.json({
@@ -50,7 +57,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { action, taskId, settings } = body as {
+    const { action, taskId, settings, sessionId } = body as {
       action: "start" | "pause" | "resume" | "stop" | "skip" | "configure";
       taskId?: string;
       settings?: {
@@ -61,6 +68,7 @@ export async function POST(request: Request) {
         autoStartBreaks?: boolean;
         autoStartWork?: boolean;
       };
+      sessionId?: number | string;
     };
 
     if (!action) {
@@ -72,6 +80,7 @@ export async function POST(request: Request) {
       userId,
       taskId,
       settings,
+      sessionId: sessionId ?? parseSessionId(request),
     });
 
     return NextResponse.json({

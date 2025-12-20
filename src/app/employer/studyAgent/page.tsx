@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Sidebar } from "./_components/Sidebar";
 import { DocumentViewer } from "./_components/DocumentViewer";
 import { TeacherPanel } from "./_components/TeacherPanel";
@@ -71,6 +72,9 @@ export interface UserPreferences {
 type AppState = "onboarding" | "connecting" | "session";
 
 export default function App() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [appState, setAppState] = useState<AppState>("onboarding");
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
@@ -92,17 +96,44 @@ export default function App() {
   const [preferencesError, setPreferencesError] = useState<string | null>(null);
   const [studyPlanError, setStudyPlanError] = useState<string | null>(null);
 
+  const mapServerNote = (note: any, index: number): Note => ({
+    id: note.id?.toString?.() ?? note.id ?? `note-${Date.now()}-${index}`,
+    title: note.title ?? "",
+    content: note.content ?? "",
+    tags: note.tags ?? [],
+    createdAt: new Date(note.createdAt ?? Date.now()),
+    updatedAt: new Date(note.updatedAt ?? note.createdAt ?? Date.now()),
+  });
+
+  const updateSessionUrl = useCallback(
+    (id: number) => {
+      const current = new URL(window.location.href);
+      if (current.searchParams.get("sessionId") === id.toString()) return;
+      current.searchParams.set("sessionId", id.toString());
+      router.replace(`${current.pathname}${current.search}${current.hash}`);
+    },
+    [router]
+  );
+
   // Load persisted study data (goals, notes, preferences) on mount
   useEffect(() => {
     const loadPersistedData = async () => {
       try {
-        const response = await fetch("/api/study-agent/me");
+        const sessionIdFromUrl = searchParams.get("sessionId");
+        const url = new URL("/api/study-agent/me", window.location.origin);
+        if (sessionIdFromUrl) {
+          url.searchParams.set("sessionId", sessionIdFromUrl);
+        }
+
+        const response = await fetch(url.toString());
         if (!response.ok) return;
 
         const data = await response.json();
 
         if (data.session?.id) {
-          setSessionId(Number(data.session.id));
+          const resolvedId = Number(data.session.id);
+          setSessionId(resolvedId);
+          updateSessionUrl(resolvedId);
         }
 
         if (Array.isArray(data.goals)) {
@@ -112,14 +143,7 @@ export default function App() {
 
         if (Array.isArray(data.notes)) {
           setNotes(
-            data.notes.map((note: any, index: number) => ({
-              id: note.id?.toString?.() ?? note.id ?? `note-${Date.now()}-${index}`,
-              title: note.title ?? "",
-              content: note.content ?? "",
-              tags: note.tags ?? [],
-              createdAt: new Date(note.createdAt),
-              updatedAt: new Date(note.updatedAt),
-            }))
+            data.notes.map((note: any, index: number) => mapServerNote(note, index))
           );
           console.log(`📒 [StudyAgent] Loaded ${data.notes.length} notes from database`);
         }
@@ -129,7 +153,7 @@ export default function App() {
     };
 
     void loadPersistedData();
-  }, []);
+  }, [searchParams, updateSessionUrl]);
 
   // Fetch documents from database on mount
   useEffect(() => {
@@ -285,6 +309,7 @@ export default function App() {
       if (sessionData.session?.id) {
         newSessionId = Number(sessionData.session.id);
         setSessionId(newSessionId);
+        updateSessionUrl(newSessionId);
       }
     } catch (error) {
       console.error("Error creating study session", error);
@@ -682,13 +707,47 @@ export default function App() {
   };
 
   const handleAddNote = (note: Omit<Note, "id" | "createdAt" | "updatedAt">) => {
-    const newNote: Note = {
+    const tempId = `temp-${Date.now()}`;
+    const optimisticNote: Note = {
       ...note,
-      id: Date.now().toString(), // fix this
+      id: tempId,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    setNotes((prev) => [...prev, newNote]);
+    setNotes((prev) => [...prev, optimisticNote]);
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/study-agent/sync/notes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "create",
+            data: {
+              title: note.title,
+              content: note.content,
+              tags: note.tags,
+            },
+            sessionId,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save note");
+        }
+
+        const data = await response.json();
+        if (data.note) {
+          const savedNote = mapServerNote(data.note, 0);
+          setNotes((prev) =>
+            prev.map((existing) => (existing.id === tempId ? savedNote : existing))
+          );
+        }
+      } catch (error) {
+        console.error("Error saving note", error);
+        setNotes((prev) => prev.filter((existing) => existing.id !== tempId));
+      }
+    })();
   };
 
   const handleUpdateNote = async (noteId: string, updates: Partial<Note>) => {
@@ -701,7 +760,7 @@ export default function App() {
 
     // Sync with backend
     try {
-      await fetch("/api/study-agent/sync/notes", {
+      const response = await fetch("/api/study-agent/sync/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -711,6 +770,16 @@ export default function App() {
           sessionId,
         }),
       });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.note) {
+          const updatedNote = mapServerNote(data.note, 0);
+          setNotes((prev) =>
+            prev.map((note) => (note.id === noteId ? updatedNote : note))
+          );
+        }
+      }
     } catch (error) {
       console.error("Error syncing note update to backend:", error);
     }
@@ -864,6 +933,7 @@ export default function App() {
             onToggleSidebar={() => setShowSidebar(!showSidebar)}
             isDark={isDark}
             errorMessage={studyPlanError}
+            sessionId={sessionId}
           />
         )}
       </ResizablePanel>

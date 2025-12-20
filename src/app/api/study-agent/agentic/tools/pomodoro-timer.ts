@@ -111,7 +111,9 @@ function formatTimeRemaining(endsAt: Date): string {
 /**
  * Manage Pomodoro timer
  */
-export async function managePomodoro(input: PomodoroInput & { userId: string }): Promise<{
+export async function managePomodoro(
+    input: PomodoroInput & { userId: string; sessionId?: string | number }
+): Promise<{
     success: boolean;
     session?: PomodoroSession;
     message: string;
@@ -119,8 +121,12 @@ export async function managePomodoro(input: PomodoroInput & { userId: string }):
     timeRemaining?: string;
     encouragement?: string;
 }> {
+    const parsedSessionId = input.sessionId ? Number(input.sessionId) : undefined;
     const now = new Date();
-    const session = await resolveSessionForUser(input.userId);
+    const session = await resolveSessionForUser(
+        input.userId,
+        Number.isNaN(parsedSessionId) ? undefined : parsedSessionId
+    );
     if (!session) {
         return {
             success: false,
@@ -514,6 +520,7 @@ export const pomodoroTool = tool(
                 action: input.action,
                 userId: input.userId,
                 settings: input.settings,
+                sessionId: input.sessionId,
             });
 
             return JSON.stringify(result);
