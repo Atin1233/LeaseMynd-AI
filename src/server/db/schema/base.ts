@@ -22,7 +22,7 @@ import { pgTable } from "./helpers";
 export const users = pgTable(
     "users",
     {
-        id: serial("id").primaryKey().unique(),
+        id: serial("id").primaryKey(),
         name: varchar("name", { length: 256 }).notNull(),
         email: varchar("email", { length: 256 }).notNull(),
         userId: varchar("userId", { length: 256 }).notNull().unique(),

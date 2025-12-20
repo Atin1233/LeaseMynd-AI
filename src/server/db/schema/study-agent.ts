@@ -1,7 +1,7 @@
 
 import { relations, sql } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
-import { boolean, index, integer, jsonb, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, serial, text, timestamp, varchar, bigint } from "drizzle-orm/pg-core";
 
 import { pgTable } from "./helpers";
 
@@ -28,7 +28,7 @@ export const studyAgentProfile = pgTable(
     {
         id: serial("id").primaryKey(),
         userId: varchar("user_id", { length: 256 }).notNull(),
-        sessionId: integer("session_id")
+        sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
         name: text("name"),
@@ -53,7 +53,7 @@ export const studyAgentPreferences = pgTable(
     {
         id: serial("id").primaryKey(),
         userId: varchar("user_id", { length: 256 }).notNull(),
-        sessionId: integer("session_id")
+        sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
         preferences: jsonb("preferences").notNull().default({}),
@@ -77,7 +77,7 @@ export const studyAgentGoals = pgTable(
     {
         id: serial("id").primaryKey(),
         userId: varchar("user_id", { length: 256 }).notNull(),
-        sessionId: integer("session_id")
+        sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
         title: text("title").notNull(),
@@ -102,12 +102,13 @@ export const studyAgentPomodoroSettings = pgTable(
     {
         id: serial("id").primaryKey(),
         userId: varchar("user_id", { length: 256 }).notNull(),
-        sessionId: integer("session_id")
+        sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
         focusMinutes: integer("focus_minutes").notNull().default(25),
         shortBreakMinutes: integer("short_break_minutes").notNull().default(5),
         longBreakMinutes: integer("long_break_minutes").notNull().default(15),
+        remainingTime: integer("remaining_time").notNull().default(0),
         sessionsBeforeLongBreak: integer("sessions_before_long_break")
             .notNull()
             .default(4),
@@ -135,7 +136,7 @@ export const studyAgentNotes = pgTable(
     {
         id: serial("id").primaryKey(),
         userId: varchar("user_id", { length: 256 }).notNull(),
-        sessionId: integer("session_id")
+        sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
         title: text("title"),
