@@ -18,6 +18,7 @@ interface StudyBuddyPanelProps {
   studyPlan: StudyPlanItem[];
   documents: Document[];
   notes: Note[];
+  sessionId?: number | null;
   selectedDocument: Document | null;
   onSendMessage: (content: string) => void;
   onEndCall?: () => void;
@@ -53,6 +54,7 @@ export function StudyBuddyPanel({
   onToggleSidebar,
   isDark = false,
   errorMessage,
+  sessionId,
 }: StudyBuddyPanelProps) {
   void _selectedDocument; // Unused but required by interface
   const [isCreating, setIsCreating] = useState(false);
@@ -427,7 +429,7 @@ export function StudyBuddyPanel({
               </p>
             </div>
             
-            <PomodoroTimer isDark={isDark} />
+            <PomodoroTimer isDark={isDark} sessionId={sessionId} />
           </div>
         </TabsContent>
 

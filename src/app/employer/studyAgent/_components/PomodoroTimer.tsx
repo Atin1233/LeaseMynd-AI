@@ -8,6 +8,7 @@ import { Label } from "./ui/label";
 
 interface PomodoroTimerProps {
   isDark?: boolean;
+  sessionId?: number | null;
   onTimerUpdate?: (isRunning: boolean, phase: string, timeLeft: number) => void;
 }
 
@@ -31,7 +32,7 @@ interface PomodoroSession {
   };
 }
 
-export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerProps) {
+export function PomodoroTimer({ isDark = false, onTimerUpdate, sessionId }: PomodoroTimerProps) {
   const [mode, setMode] = useState<TimerMode>("focus");
   const [focusDuration, setFocusDuration] = useState(25);
   const [shortBreakDuration, setShortBreakDuration] = useState(5);
@@ -57,9 +58,20 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
     return mins * 60 + secs;
   };
 
+  const buildUrl = useCallback(
+    (path: string) => {
+      const url = new URL(path, window.location.origin);
+      if (sessionId) {
+        url.searchParams.set("sessionId", sessionId.toString());
+      }
+      return url.toString();
+    },
+    [sessionId]
+  );
+
   const syncWithBackend = useCallback(async () => {
     try {
-      const response = await fetch("/api/study-agent/sync/pomodoro");
+      const response = await fetch(buildUrl("/api/study-agent/sync/pomodoro"));
       if (!response.ok) return;
 
       const data = await response.json();
@@ -110,9 +122,10 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
 
       setLastSyncTime(new Date());
     } catch (error) {
-      console.error("Error syncing Pomodoro state", error);
+    console.error("Error syncing Pomodoro state", error);
     }
   }, [
+    buildUrl,
     focusDuration,
     shortBreakDuration,
     longBreakDuration,
@@ -162,7 +175,7 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await fetch("/api/study-agent/me/pomodoro-settings");
+        const response = await fetch(buildUrl("/api/study-agent/me/pomodoro-settings"));
         if (!response.ok) {
           throw new Error("Failed to fetch settings");
         }
@@ -187,7 +200,7 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
     };
 
     void loadSettings();
-  }, [syncWithBackend]);
+  }, [buildUrl, syncWithBackend]);
 
   useEffect(() => {
     if (!hasLoadedSettings.current) return;
@@ -195,7 +208,7 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
 
     const persistSettings = async () => {
       try {
-        const response = await fetch("/api/study-agent/me/pomodoro-settings", {
+        const response = await fetch(buildUrl("/api/study-agent/me/pomodoro-settings"), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -205,6 +218,7 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
             sessionsBeforeLongBreak,
             autoStartBreaks,
             autoStartPomodoros,
+            sessionId,
           }),
           signal: controller.signal,
         });
@@ -231,6 +245,7 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
     sessionsBeforeLongBreak,
     autoStartBreaks,
     autoStartPomodoros,
+    sessionId,
   ]);
 
   const handleTimerComplete = async () => {
@@ -243,10 +258,10 @@ export function PomodoroTimer({ isDark = false, onTimerUpdate }: PomodoroTimerPr
   const syncAction = async (action: "start" | "pause" | "resume" | "stop" | "skip" | "configure", settings?: object) => {
     setIsSyncing(true);
     try {
-      const response = await fetch("/api/study-agent/sync/pomodoro", {
+      const response = await fetch(buildUrl("/api/study-agent/sync/pomodoro"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, settings }),
+        body: JSON.stringify({ action, settings, sessionId }),
       });
 
       if (response.ok) {
