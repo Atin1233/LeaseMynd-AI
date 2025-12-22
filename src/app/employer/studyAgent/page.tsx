@@ -77,6 +77,7 @@ export default function App() {
 
   const [appState, setAppState] = useState<AppState>("onboarding");
   const [sessionId, setSessionId] = useState<number | null>(null);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
   const [teacherView, setTeacherView] = useState<"documents" | "docs" | "whiteboard">("docs");
   const [isDark, setIsDark] = useState(false);
@@ -150,42 +151,12 @@ export default function App() {
     [router]
   );
 
-  // If no sessionId is present in the URL, create a fresh session and stay on onboarding
+  // If no sessionId is present in the URL, stay on onboarding
   useEffect(() => {
     const sessionIdFromUrl = searchParams.get("sessionId");
-    if (sessionIdFromUrl) return;
-
-    let cancelled = false;
-
-    const bootstrapSession = async () => {
-      try {
-        const response = await fetch("/api/study-agent/me/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to create study session");
-        }
-
-        const data = await response.json();
-        const newId = Number(data.session?.id);
-        if (!newId || cancelled) return;
-
-        setSessionId(newId);
-        setAppState("onboarding");
-        updateSessionUrl(newId);
-      } catch (error) {
-        console.error("Error bootstrapping study session", error);
-      }
-    };
-
-    void bootstrapSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [searchParams, updateSessionUrl]);
+    if (sessionIdFromUrl) return;  // Already has session, skip
+    setAppState("onboarding");
+  }, [searchParams]);
 
   // Load persisted study data (goals, notes, preferences) on mount
   // If URL has sessionId, resume that session immediately
@@ -193,16 +164,20 @@ export default function App() {
     const loadPersistedData = async () => {
       try {
         const sessionIdFromUrl = searchParams.get("sessionId");
-        const resolvedSessionId =
-          sessionIdFromUrl ?? (sessionId ? sessionId.toString() : null);
-
-        if (!resolvedSessionId) return;
+        
+        // Only fetch if we have a valid sessionId in the URL
+        if (!sessionIdFromUrl) {
+          return;
+        }
 
         const url = new URL("/api/study-agent/me", window.location.origin);
-        url.searchParams.set("sessionId", resolvedSessionId);
+        url.searchParams.set("sessionId", sessionIdFromUrl);
 
         const response = await fetch(url.toString());
-        if (!response.ok) return;
+        if (!response.ok) {
+          console.error("Failed to load study agent data");
+          return;
+        }
 
         const data = await response.json();
 
@@ -247,7 +222,8 @@ export default function App() {
     };
 
     void loadPersistedData();
-  }, [searchParams, documents, updateSessionUrl, sessionId]);
+  }, [searchParams, documents, updateSessionUrl]);
+
 
   // Save new messages to database
   const saveMessageToDb = useCallback(async (message: Message) => {
@@ -407,6 +383,13 @@ export default function App() {
   };
 
   const handleCompleteOnboarding = async (preferences: UserPreferences) => {
+    // Prevent multiple session creations
+    if (isCreatingSession || sessionId) {
+      console.log("Session creation already in progress or session exists");
+      return;
+    }
+
+    setIsCreatingSession(true);
     setPreferencesError(null);
     setStudyPlanError(null);
     setUserPreferences(preferences);
@@ -432,6 +415,7 @@ export default function App() {
     } catch (error) {
       console.error("Error creating study session", error);
       setPreferencesError("We couldn't start your study session. Please try again.");
+      setIsCreatingSession(false);
       return;
     }
     
@@ -578,6 +562,7 @@ export default function App() {
     // Move to session after connection animation
     setTimeout(() => {
       setAppState("session");
+      setIsCreatingSession(false);
     }, 3000);
   };
 
@@ -589,6 +574,7 @@ export default function App() {
     // Reset user preferences to allow new session setup
     setUserPreferences(null);
     setSessionId(null);
+    setIsCreatingSession(false);
   };
 
   const handleSendMessage = async (content: string) => {
