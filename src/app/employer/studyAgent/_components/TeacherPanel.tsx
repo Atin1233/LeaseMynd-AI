@@ -118,15 +118,15 @@ export function TeacherPanel({
 
       {/* Tabs for Study Plan and AI Query - Scrollable Container */}
       <Tabs defaultValue="plan" className="flex-1 flex flex-col min-h-0">
-        <div className={`flex-shrink-0 border-b px-4 pt-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <TabsList className={`w-full grid grid-cols-2 ${isDark ? 'bg-slate-800' : ''}`}>
+        <div className={`flex-shrink-0 border-b px-4 py-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <TabsList className={`w-full grid grid-cols-2 h-9 ${isDark ? 'bg-slate-800' : ''}`}>
             <TabsTrigger value="plan">Study Plan</TabsTrigger>
             <TabsTrigger value="query">AI Query</TabsTrigger>
           </TabsList>
         </div>
 
         {/* Study Plan Tab */}
-        <TabsContent value="plan" className="flex-1 overflow-y-auto p-4 m-0 data-[state=active]:block">
+        <TabsContent value="plan" className="flex-1 overflow-y-auto p-4 mt-0 data-[state=active]:block data-[state=inactive]:hidden">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className={`text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Your Study Plan</h3>
@@ -222,7 +222,7 @@ export function TeacherPanel({
         </TabsContent>
 
         {/* Chat Tab */}
-        <TabsContent value="query" className="flex-1 flex flex-col m-0 data-[state=active]:flex">
+        <TabsContent value="query" className="flex-1 flex flex-col mt-0 data-[state=active]:flex data-[state=inactive]:hidden">
           <AIQueryChat 
             isBuddy={false}
             isDark={isDark}

@@ -30,10 +30,13 @@ export async function POST(request: Request) {
         const name = typeof body?.name === "string" && body.name.trim().length > 0
             ? body.name.trim()
             : undefined;
+        
+        // Get mode from body, default to "teacher"
+        const mode = body?.mode === "study-buddy" ? "study-buddy" : "teacher";
 
         const [session] = await db
             .insert(studyAgentSessions)
-            .values({ userId, name })
+            .values({ userId, name, mode })
             .returning();
 
         return NextResponse.json({ session: serializeBigInt(session) });

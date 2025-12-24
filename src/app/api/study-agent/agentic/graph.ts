@@ -62,8 +62,6 @@ let compiledGraph: ReturnType<typeof createStudyBuddyGraph> | null = null;
  * Get or create the Study Buddy Agent graph
  */
 export function getStudyBuddyGraph() {
-  if (!compiledGraph) {
-    compiledGraph = createStudyBuddyGraph();
-  }
+  compiledGraph ??= createStudyBuddyGraph();
   return compiledGraph;
 }

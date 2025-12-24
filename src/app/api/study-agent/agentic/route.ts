@@ -22,18 +22,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-
-    // Validate request
-    const {
-      message,
-      mode = "study-buddy",
-      fieldOfStudy,
-      selectedDocuments,
-      studyPlan,
-      conversationHistory,
-      preferences,
-    } = body as {
+    const body = (await request.json()) as {
       message: string;
       mode?: StudyMode;
       fieldOfStudy?: string;
@@ -47,6 +36,17 @@ export async function POST(request: Request) {
         responseLength?: "brief" | "moderate" | "detailed";
       };
     };
+
+    // Validate request
+    const {
+      message,
+      mode = "study-buddy",
+      fieldOfStudy,
+      selectedDocuments,
+      studyPlan,
+      conversationHistory,
+      preferences,
+    } = body;
 
     if (!message || message.trim().length === 0) {
       return NextResponse.json(
