@@ -271,7 +271,7 @@ async function enhanceWithCompanyDocuments(
         id: document.id, 
         title: document.title 
     }).from(document).where(and(
-        eq(document.companyId, specification.companyId.toString()),
+        eq(document.companyId, BigInt(specification.companyId)),
         ne(document.id, specification.documentId)
     )));
     

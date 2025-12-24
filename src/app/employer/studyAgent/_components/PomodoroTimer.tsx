@@ -113,7 +113,7 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
           Math.floor((endsAt.getTime() - Date.now()) / 1000)
         );
         setTimeLeft(remainingSeconds || durationSeconds);
-      } else if (remainingFromStatus !== undefined) {
+      } else if (remainingFromStatus !== undefined && remainingFromStatus !== null) {
         setTimeLeft(remainingFromStatus);
       }
 
@@ -273,6 +273,7 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
     sessionsBeforeLongBreak,
     autoStartBreaks,
     autoStartPomodoros,
+    sessionId,
   ]);
 
   const handleTimerComplete = async () => {

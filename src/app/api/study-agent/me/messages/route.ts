@@ -60,8 +60,10 @@ export async function POST(request: Request) {
         };
         const session = await resolveSessionForUser(
             userId,
-            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+            typeof body.sessionId === "number"
                 ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
                 : parseSessionId(request)
         );
 
@@ -98,21 +100,38 @@ export async function POST(request: Request) {
         }
 
         // Single message insert
+        const roleValue: string = body.role ?? '';
+        const contentValue: string = body.content ?? '';
+        const messageValues: {
+            userId: string;
+            sessionId: bigint;
+            role: string;
+            content: string;
+            ttsContent: string | null;
+            attachedDocument: string | null;
+            attachedDocumentId: string | null;
+            attachedDocumentUrl: string | null;
+            isVoice: boolean;
+            createdAt: Date;
+            odlId?: string;
+        } = {
+            userId,
+            sessionId: sessionIdBigInt,
+            role: roleValue,
+            content: contentValue,
+            ttsContent: body.ttsContent ?? null,
+            attachedDocument: body.attachedDocument ?? null,
+            attachedDocumentId: body.attachedDocumentId ?? null,
+            attachedDocumentUrl: body.attachedDocumentUrl ?? null,
+            isVoice: Boolean(body.isVoice),
+            createdAt: body.createdAt ? new Date(body.createdAt) : new Date(),
+        };
+        if (body.originalId) {
+            messageValues.odlId = body.originalId;
+        }
         const [created] = await db
             .insert(studyAgentMessages)
-            .values({
-                odlId: body.originalId ?? null,
-                userId,
-                sessionId: sessionIdBigInt,
-                role: body.role,
-                content: body.content,
-                ttsContent: body.ttsContent ?? null,
-                attachedDocument: body.attachedDocument ?? null,
-                attachedDocumentId: body.attachedDocumentId ?? null,
-                attachedDocumentUrl: body.attachedDocumentUrl ?? null,
-                isVoice: Boolean(body.isVoice),
-                createdAt: body.createdAt ? new Date(body.createdAt) : new Date(),
-            })
+            .values(messageValues)
             .returning();
 
         if (!created) {

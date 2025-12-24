@@ -51,7 +51,7 @@ export async function validateDocumentAccess(
     }
   });
 
-  return { validDocIds, documentTitles, companyId };
+  return { validDocIds, documentTitles, companyId: companyId.toString() };
 }
 
 /**
@@ -63,7 +63,7 @@ export async function getUserCompanyId(userId: string): Promise<string | null> {
     .from(users)
     .where(eq(users.userId, userId));
 
-  return userInfo?.companyId ?? null;
+  return userInfo?.companyId ? userInfo.companyId.toString() : null;
 }
 
 /**

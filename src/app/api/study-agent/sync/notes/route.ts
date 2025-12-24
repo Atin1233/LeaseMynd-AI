@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: result.success,
-      notes: (result.notes ?? []) as unknown[],
+      notes: result.note ? [result.note] : [],
       message: result.message,
     });
   } catch (err) {
@@ -105,8 +105,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: result.success,
       note: result.note as unknown,
-      notes: result.notes as unknown,
-      summary: result.summary as unknown,
       message: result.message,
     });
   } catch (err) {

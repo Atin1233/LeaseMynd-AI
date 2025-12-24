@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Sidebar } from "../_components/Sidebar";
 import { DocumentViewer } from "../_components/DocumentViewer";
@@ -11,7 +11,7 @@ import { ResizablePanel } from "../_components/ResizablePanel";
 import { Toaster } from "../_components/ui/sonner";
 import type { Message, Document, StudyPlanItem, UserPreferences } from "../types";
 
-export default function TeacherPage() {
+function TeacherPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -575,6 +575,21 @@ export default function TeacherPage() {
       
       <Toaster />
     </div>
+  );
+}
+
+export default function TeacherPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your study session...</p>
+        </div>
+      </div>
+    }>
+      <TeacherPageContent />
+    </Suspense>
   );
 }
 

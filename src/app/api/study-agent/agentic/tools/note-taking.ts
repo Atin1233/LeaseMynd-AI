@@ -75,7 +75,7 @@ export async function manageNotes(
         .insert(studyAgentNotes)
         .values({
           userId: input.userId,
-          sessionId: session.id,
+          sessionId: BigInt(session.id),
           title: input.data?.title ?? "Untitled Note",
           content: input.data?.content ?? "",
           tags: input.data?.tags ?? [],
@@ -83,6 +83,10 @@ export async function manageNotes(
           updatedAt: now,
         })
         .returning();
+
+      if (!inserted) {
+        return { success: false, message: "Failed to create note" };
+      }
 
       const newNote = mapRowToNote(inserted);
       console.log(`📝 [Notes] Created note: ${newNote.title}`);
@@ -113,7 +117,7 @@ export async function manageNotes(
           and(
             eq(studyAgentNotes.id, noteId),
             eq(studyAgentNotes.userId, input.userId),
-            eq(studyAgentNotes.sessionId, session.id)
+            eq(studyAgentNotes.sessionId, BigInt(session.id))
           )
         );
 
@@ -133,7 +137,7 @@ export async function manageNotes(
           and(
             eq(studyAgentNotes.id, noteId),
             eq(studyAgentNotes.userId, input.userId),
-            eq(studyAgentNotes.sessionId, session.id)
+            eq(studyAgentNotes.sessionId, BigInt(session.id))
           )
         )
         .returning();

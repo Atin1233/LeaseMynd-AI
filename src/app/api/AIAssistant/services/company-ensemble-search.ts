@@ -40,7 +40,7 @@ type CompanyChunkRow = {
     id: number;
     content: string;
     page: number;
-    documentId: number;
+    documentId: bigint;
     documentTitle: string;
 };
 
@@ -125,7 +125,7 @@ async function getCompanyChunks(companyId: number): Promise<CompanyChunkRow[]> {
         })
         .from(pdfChunks)
         .innerJoin(document, eq(pdfChunks.documentId, document.id))
-        .where(eq(document.companyId, companyId.toString()));
+        .where(eq(document.companyId, BigInt(companyId)));
 
     return rows;
 }

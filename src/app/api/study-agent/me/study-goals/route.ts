@@ -86,8 +86,10 @@ export async function POST(request: Request) {
         };
         const session = await resolveSessionForUser(
             userId,
-            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+            typeof body.sessionId === "number"
                 ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
                 : parseSessionId(request)
         );
 
@@ -111,7 +113,7 @@ export async function POST(request: Request) {
                 .values(
                     body.items.map((item) => ({
                         userId,
-                        sessionId: session.id,
+                        sessionId: BigInt(session.id),
                         title: item.title ?? "",
                         description: item.description ?? null,
                         materials: item.materials ?? [],
@@ -167,8 +169,10 @@ export async function PUT(request: Request) {
 
         const session = await resolveSessionForUser(
             userId,
-            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+            typeof body.sessionId === "number"
                 ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
                 : parseSessionId(request)
         );
 
@@ -221,8 +225,10 @@ export async function DELETE(request: Request) {
 
         const session = await resolveSessionForUser(
             userId,
-            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+            typeof body.sessionId === "number"
                 ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
                 : parseSessionId(request)
         );
 

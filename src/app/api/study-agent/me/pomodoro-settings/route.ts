@@ -77,8 +77,10 @@ export async function POST(request: Request) {
         };
         const session = await resolveSessionForUser(
             userId,
-            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+            typeof body.sessionId === "number"
                 ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
                 : parseSessionId(request)
         );
 

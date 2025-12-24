@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Upload, X, FileText, CheckCircle, Loader2, Plus, Check } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Button } from "./ui/button";
@@ -57,14 +57,7 @@ export function UploadDocumentModal({
   const [enableOCR, setEnableOCR] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch categories from database when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      void fetchCategories();
-    }
-  }, [isOpen]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setIsLoadingCategories(true);
     try {
       const response = await fetch("/api/Categories/GetCategories");
@@ -81,7 +74,14 @@ export function UploadDocumentModal({
     } finally {
       setIsLoadingCategories(false);
     }
-  };
+  }, [category]);
+
+  // Fetch categories from database when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      void fetchCategories();
+    }
+  }, [isOpen, fetchCategories]);
 
   // Auto-populate document title from filename
   useEffect(() => {

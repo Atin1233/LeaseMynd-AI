@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Sidebar } from "../_components/Sidebar";
 import { DocumentViewer } from "../_components/DocumentViewer";
@@ -9,7 +9,131 @@ import { ResizablePanel } from "../_components/ResizablePanel";
 import { Toaster } from "../_components/ui/sonner";
 import type { Message, Document, StudyPlanItem, Note, UserPreferences } from "../types";
 
-export default function StudyBuddyPage() {
+interface ServerNote {
+  id?: string | number;
+  title?: string;
+  content?: string;
+  tags?: string[];
+  createdAt?: string | number | Date;
+  updatedAt?: string | number | Date;
+}
+
+interface ServerMessage {
+  id?: string | number;
+  originalId?: string;
+  role?: string;
+  content?: string;
+  ttsContent?: string;
+  attachedDocument?: string;
+  attachedDocumentId?: string;
+  attachedDocumentUrl?: string;
+  isVoice?: boolean;
+  createdAt?: string | number | Date;
+}
+
+interface ServerGoal {
+  id?: string | number;
+  title?: string;
+  description?: string;
+  completed?: boolean;
+  materials?: string[];
+}
+
+interface AiPersonalityObject {
+  extroversion: number;
+  intuition: number;
+  thinking: number;
+  judging: number;
+}
+
+interface ServerPreferencesData {
+  preferences?: {
+    selectedDocuments?: string[];
+    name?: string;
+    grade?: string;
+    gender?: string;
+    fieldOfStudy?: string;
+    aiGender?: string;
+    aiPersonality?: string | AiPersonalityObject;
+  };
+  profile?: {
+    name?: string;
+    grade?: string;
+    gender?: string;
+    fieldOfStudy?: string;
+  };
+}
+
+const parseAiPersonality = (value: string | AiPersonalityObject | undefined): AiPersonalityObject | undefined => {
+  if (!value) return undefined;
+  if (typeof value === "object") return value;
+  try {
+    return JSON.parse(value) as AiPersonalityObject;
+  } catch {
+    return undefined;
+  }
+};
+
+const mapServerNote = (note: ServerNote, index: number): Note => {
+  const parseDate = (dateValue: string | number | Date | undefined): Date => {
+    if (!dateValue) return new Date();
+    const parsed = new Date(dateValue);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+  
+  const createdAt = parseDate(note.createdAt);
+  const updatedAt = note.updatedAt ? parseDate(note.updatedAt) : createdAt;
+  
+  return {
+    id: typeof note.id === "number" ? note.id.toString() : note.id ?? `note-${Date.now()}-${index}`,
+    title: note.title ?? "",
+    content: note.content ?? "",
+    tags: note.tags ?? [],
+    createdAt,
+    updatedAt,
+  };
+};
+
+const mapServerMessage = (message: ServerMessage, index: number): Message => ({
+  id: typeof message.id === "number" ? message.id.toString() : message.originalId ?? `message-${Date.now()}-${index}`,
+  role: message.role === "teacher" || message.role === "buddy" ? message.role : "user",
+  content: message.content ?? "",
+  ttsContent: message.ttsContent ?? undefined,
+  timestamp: new Date(message.createdAt ?? Date.now()),
+  attachedDocument: message.attachedDocument ?? undefined,
+  attachedDocumentId: message.attachedDocumentId ?? undefined,
+  attachedDocumentUrl: message.attachedDocumentUrl ?? undefined,
+  isVoice: Boolean(message.isVoice),
+});
+
+const mapServerGoal = (goal: ServerGoal): StudyPlanItem => ({
+  id: typeof goal.id === "number" ? goal.id.toString() : goal.id ?? Date.now().toString(),
+  title: goal.title ?? "",
+  description: goal.description ?? "",
+  completed: Boolean(goal.completed),
+  materials: goal.materials ?? [],
+});
+
+const buildPreferencesFromServer = (data: ServerPreferencesData): UserPreferences | null => {
+  const prefs = data?.preferences ?? {};
+  const profile = data?.profile ?? {};
+  const hasPrefs = prefs && Object.keys(prefs).length > 0;
+  const hasProfile = profile && Object.keys(profile).length > 0;
+  if (!hasPrefs && !hasProfile) return null;
+
+  return {
+    selectedDocuments: prefs.selectedDocuments ?? [],
+    name: profile.name ?? prefs.name,
+    grade: profile.grade ?? prefs.grade ?? "",
+    gender: profile.gender ?? prefs.gender ?? "",
+    fieldOfStudy: profile.fieldOfStudy ?? prefs.fieldOfStudy ?? "",
+    mode: "study-buddy",
+    aiGender: prefs.aiGender,
+    aiPersonality: parseAiPersonality(prefs.aiPersonality),
+  };
+};
+
+function StudyBuddyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -29,130 +153,6 @@ export default function StudyBuddyPage() {
   
   // Ref to prevent double introduction generation
   const introGeneratedRef = useRef(false);
-
-  interface ServerNote {
-    id?: string | number;
-    title?: string;
-    content?: string;
-    tags?: string[];
-    createdAt?: string | number | Date;
-    updatedAt?: string | number | Date;
-  }
-
-  interface ServerMessage {
-    id?: string | number;
-    originalId?: string;
-    role?: string;
-    content?: string;
-    ttsContent?: string;
-    attachedDocument?: string;
-    attachedDocumentId?: string;
-    attachedDocumentUrl?: string;
-    isVoice?: boolean;
-    createdAt?: string | number | Date;
-  }
-
-  interface ServerGoal {
-    id?: string | number;
-    title?: string;
-    description?: string;
-    completed?: boolean;
-    materials?: string[];
-  }
-
-  interface AiPersonalityObject {
-    extroversion: number;
-    intuition: number;
-    thinking: number;
-    judging: number;
-  }
-
-  interface ServerPreferencesData {
-    preferences?: {
-      selectedDocuments?: string[];
-      name?: string;
-      grade?: string;
-      gender?: string;
-      fieldOfStudy?: string;
-      aiGender?: string;
-      aiPersonality?: string | AiPersonalityObject;
-    };
-    profile?: {
-      name?: string;
-      grade?: string;
-      gender?: string;
-      fieldOfStudy?: string;
-    };
-  }
-
-  const parseAiPersonality = (value: string | AiPersonalityObject | undefined): AiPersonalityObject | undefined => {
-    if (!value) return undefined;
-    if (typeof value === "object") return value;
-    try {
-      return JSON.parse(value) as AiPersonalityObject;
-    } catch {
-      return undefined;
-    }
-  };
-
-  const mapServerNote = (note: ServerNote, index: number): Note => {
-    const parseDate = (dateValue: string | number | Date | undefined): Date => {
-      if (!dateValue) return new Date();
-      const parsed = new Date(dateValue);
-      return isNaN(parsed.getTime()) ? new Date() : parsed;
-    };
-    
-    const createdAt = parseDate(note.createdAt);
-    const updatedAt = note.updatedAt ? parseDate(note.updatedAt) : createdAt;
-    
-    return {
-      id: typeof note.id === "number" ? note.id.toString() : note.id ?? `note-${Date.now()}-${index}`,
-      title: note.title ?? "",
-      content: note.content ?? "",
-      tags: note.tags ?? [],
-      createdAt,
-      updatedAt,
-    };
-  };
-
-  const mapServerMessage = (message: ServerMessage, index: number): Message => ({
-    id: typeof message.id === "number" ? message.id.toString() : message.originalId ?? `message-${Date.now()}-${index}`,
-    role: message.role === "teacher" || message.role === "buddy" ? message.role : "user",
-    content: message.content ?? "",
-    ttsContent: message.ttsContent ?? undefined,
-    timestamp: new Date(message.createdAt ?? Date.now()),
-    attachedDocument: message.attachedDocument ?? undefined,
-    attachedDocumentId: message.attachedDocumentId ?? undefined,
-    attachedDocumentUrl: message.attachedDocumentUrl ?? undefined,
-    isVoice: Boolean(message.isVoice),
-  });
-
-  const mapServerGoal = (goal: ServerGoal): StudyPlanItem => ({
-    id: typeof goal.id === "number" ? goal.id.toString() : goal.id ?? Date.now().toString(),
-    title: goal.title ?? "",
-    description: goal.description ?? "",
-    completed: Boolean(goal.completed),
-    materials: goal.materials ?? [],
-  });
-
-  const buildPreferencesFromServer = (data: ServerPreferencesData): UserPreferences | null => {
-    const prefs = data?.preferences ?? {};
-    const profile = data?.profile ?? {};
-    const hasPrefs = prefs && Object.keys(prefs).length > 0;
-    const hasProfile = profile && Object.keys(profile).length > 0;
-    if (!hasPrefs && !hasProfile) return null;
-
-    return {
-      selectedDocuments: prefs.selectedDocuments ?? [],
-      name: profile.name ?? prefs.name,
-      grade: profile.grade ?? prefs.grade ?? "",
-      gender: profile.gender ?? prefs.gender ?? "",
-      fieldOfStudy: profile.fieldOfStudy ?? prefs.fieldOfStudy ?? "",
-      mode: "study-buddy",
-      aiGender: prefs.aiGender,
-      aiPersonality: parseAiPersonality(prefs.aiPersonality),
-    };
-  };
 
   // Save new messages to database
   const saveMessageToDb = useCallback(async (message: Message) => {
@@ -749,6 +749,21 @@ export default function StudyBuddyPage() {
       
       <Toaster />
     </div>
+  );
+}
+
+export default function StudyBuddyPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your study session...</p>
+        </div>
+      </div>
+    }>
+      <StudyBuddyPageContent />
+    </Suspense>
   );
 }
 

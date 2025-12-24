@@ -45,7 +45,7 @@ export async function GET(request: Request) {
             .where(
                 and(
                     eq(studyAgentPreferences.userId, userId),
-                    eq(studyAgentPreferences.sessionId, session.id)
+                    eq(studyAgentPreferences.sessionId, BigInt(session.id))
                 )
             );
 
@@ -72,8 +72,10 @@ export async function POST(request: Request) {
         };
         const session = await resolveSessionForUser(
             userId,
-            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+            typeof body.sessionId === "number"
                 ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
                 : parseSessionId(request)
         );
 
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
             .where(
                 and(
                     eq(studyAgentPreferences.userId, userId),
-                    eq(studyAgentPreferences.sessionId, session.id)
+                    eq(studyAgentPreferences.sessionId, BigInt(session.id))
                 )
             );
 
@@ -100,18 +102,26 @@ export async function POST(request: Request) {
                 .where(
                     and(
                         eq(studyAgentPreferences.userId, userId),
-                        eq(studyAgentPreferences.sessionId, session.id)
+                        eq(studyAgentPreferences.sessionId, BigInt(session.id))
                     )
                 )
                 .returning();
+
+            if (!updated) {
+                return NextResponse.json({ error: "Failed to update preferences" }, { status: 500 });
+            }
 
             return NextResponse.json({ preferences: updated.preferences, session: serializeBigInt(session) });
         }
 
         const [created] = await db
             .insert(studyAgentPreferences)
-            .values({ userId, sessionId: session.id, preferences })
+            .values({ userId, sessionId: BigInt(session.id), preferences })
             .returning();
+
+        if (!created) {
+            return NextResponse.json({ error: "Failed to create preferences" }, { status: 500 });
+        }
 
         return NextResponse.json({ preferences: created.preferences, session: serializeBigInt(session) }, { status: 201 });
     } catch (error) {
@@ -140,7 +150,7 @@ export async function DELETE(request: Request) {
             .where(
                 and(
                     eq(studyAgentPreferences.userId, userId),
-                    eq(studyAgentPreferences.sessionId, session.id)
+                    eq(studyAgentPreferences.sessionId, BigInt(session.id))
                 )
             );
 
