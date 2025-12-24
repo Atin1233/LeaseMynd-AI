@@ -35,10 +35,34 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = (await request.json()) as {
+            sessionId?: number | string;
+            messages?: Array<{
+                originalId?: string;
+                role: string;
+                content: string;
+                ttsContent?: string;
+                attachedDocument?: string;
+                attachedDocumentId?: string;
+                attachedDocumentUrl?: string;
+                isVoice?: boolean;
+                createdAt?: string;
+            }>;
+            originalId?: string;
+            role?: string;
+            content?: string;
+            ttsContent?: string;
+            attachedDocument?: string;
+            attachedDocumentId?: string;
+            attachedDocumentUrl?: string;
+            isVoice?: boolean;
+            createdAt?: string;
+        };
         const session = await resolveSessionForUser(
             userId,
-            body.sessionId ?? parseSessionId(request)
+            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+                ? body.sessionId
+                : parseSessionId(request)
         );
 
         if (!session) {
@@ -49,17 +73,7 @@ export async function POST(request: Request) {
 
         // Handle batch insert for multiple messages
         if (Array.isArray(body.messages)) {
-            const toInsert = body.messages.map((msg: {
-                originalId?: string;
-                role: string;
-                content: string;
-                ttsContent?: string;
-                attachedDocument?: string;
-                attachedDocumentId?: string;
-                attachedDocumentUrl?: string;
-                isVoice?: boolean;
-                createdAt?: string;
-            }) => ({
+            const toInsert = body.messages.map((msg) => ({
                 odlId: msg.originalId ?? null,
                 userId,
                 sessionId: sessionIdBigInt,

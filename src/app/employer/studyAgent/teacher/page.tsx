@@ -31,8 +31,64 @@ export default function TeacherPage() {
   // Ref to prevent double introduction generation
   const introGeneratedRef = useRef(false);
 
-  const mapServerMessage = (message: any, index: number): Message => ({
-    id: message.id?.toString?.() ?? message.originalId ?? `message-${Date.now()}-${index}`,
+  interface ServerMessage {
+    id?: string | number;
+    originalId?: string;
+    role?: string;
+    content?: string;
+    ttsContent?: string;
+    attachedDocument?: string;
+    attachedDocumentId?: string;
+    attachedDocumentUrl?: string;
+    isVoice?: boolean;
+    createdAt?: string | number | Date;
+  }
+
+  interface ServerGoal {
+    id?: string | number;
+    title?: string;
+    description?: string;
+    completed?: boolean;
+    materials?: string[];
+  }
+
+  interface AiPersonalityObject {
+    extroversion: number;
+    intuition: number;
+    thinking: number;
+    judging: number;
+  }
+
+  interface ServerPreferencesData {
+    preferences?: {
+      selectedDocuments?: string[];
+      name?: string;
+      grade?: string;
+      gender?: string;
+      fieldOfStudy?: string;
+      aiGender?: string;
+      aiPersonality?: string | AiPersonalityObject;
+    };
+    profile?: {
+      name?: string;
+      grade?: string;
+      gender?: string;
+      fieldOfStudy?: string;
+    };
+  }
+
+  const parseAiPersonality = (value: string | AiPersonalityObject | undefined): AiPersonalityObject | undefined => {
+    if (!value) return undefined;
+    if (typeof value === "object") return value;
+    try {
+      return JSON.parse(value) as AiPersonalityObject;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const mapServerMessage = (message: ServerMessage, index: number): Message => ({
+    id: typeof message.id === "number" ? message.id.toString() : message.originalId ?? `message-${Date.now()}-${index}`,
     role: message.role === "teacher" || message.role === "buddy" ? message.role : "user",
     content: message.content ?? "",
     ttsContent: message.ttsContent ?? undefined,
@@ -43,15 +99,15 @@ export default function TeacherPage() {
     isVoice: Boolean(message.isVoice),
   });
 
-  const mapServerGoal = (goal: any): StudyPlanItem => ({
-    id: goal.id?.toString?.() ?? goal.id ?? Date.now().toString(),
+  const mapServerGoal = (goal: ServerGoal): StudyPlanItem => ({
+    id: typeof goal.id === "number" ? goal.id.toString() : goal.id ?? Date.now().toString(),
     title: goal.title ?? "",
     description: goal.description ?? "",
     completed: Boolean(goal.completed),
     materials: goal.materials ?? [],
   });
 
-  const buildPreferencesFromServer = (data: any): UserPreferences | null => {
+  const buildPreferencesFromServer = (data: ServerPreferencesData): UserPreferences | null => {
     const prefs = data?.preferences ?? {};
     const profile = data?.profile ?? {};
     const hasPrefs = prefs && Object.keys(prefs).length > 0;
@@ -66,7 +122,7 @@ export default function TeacherPage() {
       fieldOfStudy: profile.fieldOfStudy ?? prefs.fieldOfStudy ?? "",
       mode: "teacher",
       aiGender: prefs.aiGender,
-      aiPersonality: prefs.aiPersonality,
+      aiPersonality: parseAiPersonality(prefs.aiPersonality),
     };
   };
 
@@ -156,7 +212,17 @@ export default function TeacherPage() {
           return;
         }
 
-        const data = await response.json();
+        interface SessionDataResponse {
+          session?: {
+            id?: string | number;
+            mode?: string;
+          };
+          goals?: ServerGoal[];
+          messages?: ServerMessage[];
+          preferences?: ServerPreferencesData["preferences"];
+          profile?: ServerPreferencesData["profile"];
+        }
+        const data = await response.json() as SessionDataResponse;
 
         // Verify this is a teacher session
         if (data.session?.mode && data.session.mode !== "teacher") {
@@ -286,10 +352,13 @@ export default function TeacherPage() {
 
       if (!response.ok) throw new Error("Failed to update goal");
 
-      const data = await response.json();
+      interface GoalUpdateResponse {
+        goal?: ServerGoal;
+      }
+      const data = await response.json() as GoalUpdateResponse;
       if (data.goal) {
         setStudyPlan((prev) =>
-          prev.map((item) => (item.id === goalId ? mapServerGoal(data.goal) : item))
+          prev.map((item) => (item.id === goalId ? mapServerGoal(data.goal!) : item))
         );
       }
     } catch (error) {

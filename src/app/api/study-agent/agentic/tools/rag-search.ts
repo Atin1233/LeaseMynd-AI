@@ -10,7 +10,7 @@ import {
   validateDocumentAccess,
   formatResultsForPrompt,
 } from "~/server/rag";
-import type { RAGSearchResult, ToolResult, RAGSearchInput } from "../types";
+import type { RAGSearchResult, RAGSearchInput } from "../types";
 
 const RAGSearchSchema = z.object({
   query: z.string().describe("The search query to find relevant document content"),
@@ -95,7 +95,7 @@ export async function executeRAGSearch(
  */
 export const ragSearchTool = tool(
   async (input, config): Promise<string> => {
-    const userId = config?.configurable?.userId as string;
+    const userId = (config?.configurable as { userId?: string } | undefined)?.userId;
     
     if (!userId) {
       return JSON.stringify({

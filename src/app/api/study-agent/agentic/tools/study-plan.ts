@@ -103,7 +103,7 @@ ${existingPlanContext}`,
         : JSON.stringify(response.content);
 
     // Parse JSON response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonMatch = /\{[\s\S]*\}/.exec(content);
     if (!jsonMatch) {
       throw new Error("Failed to parse study plan response");
     }

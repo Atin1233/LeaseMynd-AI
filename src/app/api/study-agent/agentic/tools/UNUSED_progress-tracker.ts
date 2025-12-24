@@ -40,8 +40,6 @@ export async function trackProgress(
   summary?: string;
   insights?: string[];
 }> {
-  const startTime = Date.now();
-
   try {
     switch (input.action) {
       case "start": {
@@ -49,7 +47,7 @@ export async function trackProgress(
           id: uuidv4(),
           userId: input.userId,
           startTime: new Date(),
-          mode: (input.data?.mode as StudySession["mode"]) ?? "study-buddy",
+          mode: (input.data?.mode ?? "study-buddy")!,
           documentsStudied: input.data?.documentsStudied ?? [],
           conceptsCovered: input.data?.conceptsCovered ?? [],
           quizzesTaken: input.data?.quizzesTaken ?? [],
@@ -221,7 +219,7 @@ export const progressTrackerTool = tool(
         sessionId: input.sessionId ?? "",
         action: validAction as "start" | "update" | "complete",
         userId: input.userId,
-        data: input.data as ProgressTrackingInput["data"],
+        data: input.data,
       });
 
       return JSON.stringify({
