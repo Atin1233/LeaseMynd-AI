@@ -82,8 +82,14 @@ export function VoiceChat({ messages, onSendMessage, onEndCall, isBuddy = false,
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const ttsStartedAtRef = useRef<number>(0);
   // Interrupt TTS when user starts speaking
   const interruptTTS = useCallback(() => {
+    const now = performance.now();
+    if (now - ttsStartedAtRef.current < 200) {
+      return;
+    }
+
     if (audioRef.current && isPlayingAudio) {
       console.log("🔇 [VAD] Interrupting TTS - user started speaking");
       audioRef.current.pause();
@@ -92,8 +98,16 @@ export function VoiceChat({ messages, onSendMessage, onEndCall, isBuddy = false,
       setIsLoadingAudio(false);
       setCallState("listening");
       isGeneratingTTSRef.current = false;
+      
+      // Clear the audio queue by marking all current messages as "played"
+      // This prevents queued messages from being spoken after interruption
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage) {
+        console.log("🔇 [VAD] Clearing audio queue - marking all messages as played");
+        lastPlayedMessageId.current = lastMessage.id;
+      }
     }
-  }, [isPlayingAudio]);
+  }, [isPlayingAudio, messages]);
 
   // Process VAD audio and send to STT
   const processVadAudio = useCallback(async (audio: Float32Array) => {
@@ -144,7 +158,7 @@ export function VoiceChat({ messages, onSendMessage, onEndCall, isBuddy = false,
 
   // VAD hook - interrupts TTS on speech start
   const vad = useVAD({
-    onSpeechStart: interruptTTS,
+    onSpeechRealStart: interruptTTS,
     onSpeechEnd: (audio) => {
       void processVadAudio(audio);
     },
@@ -396,7 +410,7 @@ export function VoiceChat({ messages, onSendMessage, onEndCall, isBuddy = false,
             }
           })();
         });
-
+        ttsStartedAtRef.current = performance.now();
         await audio.play();
       } else {
         // Fallback: Convert streamed response to blob and play

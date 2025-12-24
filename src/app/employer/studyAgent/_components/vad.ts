@@ -5,24 +5,30 @@ import type { MicVAD } from "@ricky0123/vad-web";
 
 interface UseVADOptions {
   onSpeechStart?: () => void;
+  onSpeechRealStart?: () => void;
   onSpeechEnd?: (audio: Float32Array) => void;
   onError?: (error: Error) => void;
   positiveSpeechThreshold?: number;
   negativeSpeechThreshold?: number;
   redemptionMs?: number;
   preSpeechPadMs?: number;
+  minSpeechMs?: number;
 }
 
 export function useVAD(options: UseVADOptions = {}) {
   const {
     onSpeechStart,
     onSpeechEnd,
+    onSpeechRealStart,
     onError,
-    positiveSpeechThreshold = 0.5,
-    negativeSpeechThreshold = 0.35,
-    redemptionMs = 300,
-    preSpeechPadMs = 150,
+    positiveSpeechThreshold = 0.6,
+    negativeSpeechThreshold = 0.30,
+    redemptionMs = 3000,
+    preSpeechPadMs = 200,
+    minSpeechMs = 600,
   } = options;
+
+  const onSpeechRealStartRef = useRef(onSpeechRealStart);
 
   const vadRef = useRef<MicVAD | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -37,7 +43,8 @@ export function useVAD(options: UseVADOptions = {}) {
     onSpeechStartRef.current = onSpeechStart;
     onSpeechEndRef.current = onSpeechEnd;
     onErrorRef.current = onError;
-  }, [onSpeechStart, onSpeechEnd, onError]);
+    onSpeechRealStartRef.current = onSpeechRealStart;
+  }, [onSpeechStart, onSpeechEnd, onError, onSpeechRealStart]);
 
   const start = useCallback(async () => {
     if (vadRef.current) {
@@ -58,11 +65,28 @@ export function useVAD(options: UseVADOptions = {}) {
           setIsRecording(true);
           onSpeechStartRef.current?.();
         },
+        onSpeechRealStart: () => {
+          console.log("🎤 [VAD] Real speech started");
+          onSpeechRealStartRef.current?.();
+        },
         onSpeechEnd: (audio) => {
           console.log(`🎤 [VAD] Speech ended (${audio.length} samples)`);
           setIsRecording(false);
           onSpeechEndRef.current?.(audio);
         },
+        getStream: async () => {
+          return navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 1,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              // @ts-expect-error: not in TS lib yet, supported in some browsers
+              suppressLocalAudioPlayback: true,
+            },
+          });
+        },
+        minSpeechMs,
         baseAssetPath: "/vad/",
         onnxWASMBasePath: "/vad/",
         model: "legacy",
@@ -80,7 +104,7 @@ export function useVAD(options: UseVADOptions = {}) {
       const error = err instanceof Error ? err : new Error("Failed to start VAD");
       onErrorRef.current?.(error);
     }
-  }, [positiveSpeechThreshold, negativeSpeechThreshold, redemptionMs, preSpeechPadMs]);
+  }, [positiveSpeechThreshold, negativeSpeechThreshold, redemptionMs, preSpeechPadMs, minSpeechMs]);
 
   const pause = useCallback(() => {
     if (vadRef.current) {

@@ -48,7 +48,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const companyId = newCompany.id.toString();
+        const companyId = BigInt(newCompany.id);
 
 
         await db.insert(users).values({

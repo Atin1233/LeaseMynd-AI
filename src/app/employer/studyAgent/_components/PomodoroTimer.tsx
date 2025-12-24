@@ -1,18 +1,38 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, Clock, Coffee, Brain, Settings } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Play, Pause, RotateCcw, Clock, Coffee, Brain, Settings, SkipForward, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 
 interface PomodoroTimerProps {
   isDark?: boolean;
+  onTimerUpdate?: (isRunning: boolean, phase: string, timeLeft: number) => void;
+  sessionId?: number | null;
 }
 
-type TimerMode = "focus" | "shortBreak" | "longBreak";
+type TimerMode = "focus" | "shortBreak" | "longBreak" | "idle";
 
-export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
+interface PomodoroSession {
+  id: string;
+  phase: "work" | "short_break" | "long_break" | "idle";
+  isRunning: boolean;
+  isPaused: boolean;
+  endsAt?: string;
+  completedPomodoros: number;
+  totalWorkMinutes: number;
+  settings: {
+    workDuration: number;
+    shortBreakDuration: number;
+    longBreakDuration: number;
+    sessionsBeforeLongBreak: number;
+    autoStartBreaks: boolean;
+    autoStartWork: boolean;
+  };
+}
+
+export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps) {
   const [mode, setMode] = useState<TimerMode>("focus");
   const [focusDuration, setFocusDuration] = useState(25);
   const [shortBreakDuration, setShortBreakDuration] = useState(5);
@@ -24,7 +44,91 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
   const [completedSessions, setCompletedSessions] = useState(0);
   const [autoStartBreaks, setAutoStartBreaks] = useState(false);
   const [autoStartPomodoros, setAutoStartPomodoros] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const hasLoadedSettings = useRef(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
+  const parseTimeString = (time?: string | null) => {
+    if (!time) return undefined;
+    const [mins, secs] = time.split(":").map((value) => Number(value));
+    if (Number.isNaN(mins) || Number.isNaN(secs)) return undefined;
+    return (mins ?? 0) * 60 + (secs ?? 0);
+    };
+
+  const syncWithBackend = useCallback(async () => {
+    try {
+      const url = new URL("/api/study-agent/sync/pomodoro", window.location.origin);
+      if (sessionId) {
+        url.searchParams.set("sessionId", String(sessionId));
+      }
+
+      const response = await fetch(url.toString());
+      if (!response.ok) return;
+
+      const data = (await response.json()) as {
+        session?: Partial<PomodoroSession>;
+        timeRemaining?: string | null;
+      };
+      const session: Partial<PomodoroSession> | null = data.session ?? null;
+
+      if (session?.settings) {
+        setFocusDuration(session.settings.workDuration ?? focusDuration);
+        setShortBreakDuration(session.settings.shortBreakDuration ?? shortBreakDuration);
+        setLongBreakDuration(session.settings.longBreakDuration ?? longBreakDuration);
+        setSessionsBeforeLongBreak(
+          session.settings.sessionsBeforeLongBreak ?? sessionsBeforeLongBreak
+        );
+        setAutoStartBreaks(Boolean(session.settings.autoStartBreaks));
+        setAutoStartPomodoros(Boolean(session.settings.autoStartWork));
+      }
+
+      if (session?.phase) {
+        if (session.phase === "short_break") setMode("shortBreak");
+        else if (session.phase === "long_break") setMode("longBreak");
+        else setMode("focus");
+      }
+
+      if (typeof session?.completedPomodoros === "number") {
+        setCompletedSessions(session.completedPomodoros);
+      }
+
+      if (typeof session?.isRunning === "boolean") {
+        setIsRunning(session.isRunning);
+      }
+
+      const durationSeconds =
+        mode === "shortBreak"
+          ? shortBreakDuration * 60
+          : mode === "longBreak"
+          ? longBreakDuration * 60
+          : focusDuration * 60;
+      const remainingFromStatus = data.timeRemaining ? parseTimeString(data.timeRemaining) : null;
+      if (session?.endsAt) {
+        const endsAt = new Date(session.endsAt);
+        const remainingSeconds = Math.max(
+          0,
+          Math.floor((endsAt.getTime() - Date.now()) / 1000)
+        );
+        setTimeLeft(remainingSeconds || durationSeconds);
+      } else if (remainingFromStatus !== undefined && remainingFromStatus !== null) {
+        setTimeLeft(remainingFromStatus);
+      }
+
+      setLastSyncTime(new Date());
+    } catch (error) {
+      console.error("Error syncing Pomodoro state", error);
+    }
+  }, [
+    focusDuration,
+    shortBreakDuration,
+    longBreakDuration,
+    sessionsBeforeLongBreak,
+    mode,
+    sessionId,
+  ]);
 
   const getCurrentDuration = () => {
     switch (mode) {
@@ -34,15 +138,18 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
         return shortBreakDuration * 60;
       case "longBreak":
         return longBreakDuration * 60;
+      default:
+        return focusDuration * 60;
     }
   };
 
+  // Local countdown timer
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            handleTimerComplete();
+            void handleTimerComplete();
             return 0;
           }
           return prev - 1;
@@ -62,19 +169,137 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
 
-  const handleTimerComplete = () => {
-    setIsRunning(false);
+  // Listen for external sync events (e.g., when AI uses pomodoro_timer tool)
+  useEffect(() => {
+    const handlePomodoroSync = () => {
+      console.log("🍅 [Pomodoro] External sync event received, syncing with backend...");
+      void syncWithBackend();
+    };
 
-    if (mode === "focus") {
-      setCompletedSessions((prev) => prev + 1);
-      // After 4 focus sessions, suggest long break
-      if ((completedSessions + 1) % sessionsBeforeLongBreak === 0) {
-        switchMode("longBreak");
-      } else {
-        switchMode("shortBreak");
+    window.addEventListener("pomodoro-sync", handlePomodoroSync);
+    return () => {
+      window.removeEventListener("pomodoro-sync", handlePomodoroSync);
+    };
+  }, [syncWithBackend]);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settingsUrl = new URL(
+          "/api/study-agent/me/pomodoro-settings",
+          window.location.origin
+        );
+        if (sessionId) {
+          settingsUrl.searchParams.set("sessionId", String(sessionId));
+        }
+
+        const response = await fetch(settingsUrl.toString());
+        if (!response.ok) {
+          throw new Error("Failed to fetch settings");
+        }
+
+        const data = (await response.json()) as {
+          pomodoroSettings?: {
+            focusMinutes?: number;
+            shortBreakMinutes?: number;
+            longBreakMinutes?: number;
+            sessionsBeforeLongBreak?: number;
+            autoStartBreaks?: boolean;
+            autoStartPomodoros?: boolean;
+          };
+        };
+        const settings = data.pomodoroSettings ?? {};
+        setFocusDuration(settings.focusMinutes ?? 25);
+        setShortBreakDuration(settings.shortBreakMinutes ?? 5);
+        setLongBreakDuration(settings.longBreakMinutes ?? 15);
+        setSessionsBeforeLongBreak(settings.sessionsBeforeLongBreak ?? 4);
+        setAutoStartBreaks(Boolean(settings.autoStartBreaks));
+        setAutoStartPomodoros(Boolean(settings.autoStartPomodoros));
+        setTimeLeft((settings.focusMinutes ?? 25) * 60);
+        setSettingsError(null);
+      } catch (error) {
+        console.error("Error loading Pomodoro settings", error);
+        setSettingsError("Unable to load saved settings. Using defaults.");
+      } finally {
+        hasLoadedSettings.current = true;
+        await syncWithBackend();
       }
-    } else {
-      switchMode("focus");
+    };
+
+    hasLoadedSettings.current = false;
+    void loadSettings();
+  }, [sessionId, syncWithBackend]);
+
+  useEffect(() => {
+    if (!hasLoadedSettings.current) return;
+    const controller = new AbortController();
+
+    const persistSettings = async () => {
+      try {
+        const response = await fetch("/api/study-agent/me/pomodoro-settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            focusMinutes: focusDuration,
+            shortBreakMinutes: shortBreakDuration,
+            longBreakMinutes: longBreakDuration,
+            sessionsBeforeLongBreak,
+            autoStartBreaks,
+            autoStartPomodoros,
+            sessionId,
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to save settings");
+        }
+
+        setSettingsError(null);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error("Error saving Pomodoro settings", error);
+        setSettingsError("We couldn't save your settings. They'll stay local for now.");
+      }
+    };
+
+    void persistSettings();
+
+    return () => controller.abort();
+  }, [
+    focusDuration,
+    shortBreakDuration,
+    longBreakDuration,
+    sessionsBeforeLongBreak,
+    autoStartBreaks,
+    autoStartPomodoros,
+    sessionId,
+  ]);
+
+  const handleTimerComplete = async () => {
+    setIsRunning(false);
+    // Sync with backend to move to next phase
+    await syncAction("skip");
+  };
+
+  // Sync action with backend
+  const syncAction = async (action: "start" | "pause" | "resume" | "stop" | "skip" | "configure", settings?: object) => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch("/api/study-agent/sync/pomodoro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, settings, sessionId: sessionId ?? undefined }),
+      });
+
+      if (response.ok) {
+        // Re-sync state from backend
+        await syncWithBackend();
+      }
+    } catch (error) {
+      console.error("Error syncing action:", error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -87,13 +312,33 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
     setIsRunning(false);
   };
 
-  const handlePlayPause = () => {
-    setIsRunning(!isRunning);
+  const handlePlayPause = async () => {
+    if (isRunning) {
+      await syncAction("pause");
+    } else {
+      await syncAction(timeLeft < getCurrentDuration() ? "resume" : "start");
+    }
   };
 
-  const handleReset = () => {
-    setIsRunning(false);
+  const handleReset = async () => {
+    await syncAction("stop");
     setTimeLeft(getCurrentDuration());
+  };
+
+  const handleSkip = async () => {
+    await syncAction("skip");
+  };
+
+  const handleSaveSettings = async () => {
+    await syncAction("configure", {
+      workDuration: focusDuration,
+      shortBreakDuration,
+      longBreakDuration,
+      sessionsBeforeLongBreak,
+      autoStartBreaks,
+      autoStartWork: autoStartPomodoros,
+    });
+    setShowSettings(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -112,12 +357,18 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
           : "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200"
       }`}
     >
+      {settingsError && (
+        <p className="mb-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+          {settingsError}
+        </p>
+      )}
       {/* Mode Selector */}
       <div className="flex gap-1 mb-3">
         <Button
           variant={mode === "focus" ? "default" : "outline"}
           size="sm"
           onClick={() => switchMode("focus")}
+          disabled={isRunning}
           className={`flex-1 h-8 text-xs ${
             mode === "focus"
               ? "bg-purple-600 hover:bg-purple-700 text-white"
@@ -133,6 +384,7 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
           variant={mode === "shortBreak" ? "default" : "outline"}
           size="sm"
           onClick={() => switchMode("shortBreak")}
+          disabled={isRunning}
           className={`flex-1 h-8 text-xs ${
             mode === "shortBreak"
               ? "bg-green-600 hover:bg-green-700 text-white"
@@ -148,6 +400,7 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
           variant={mode === "longBreak" ? "default" : "outline"}
           size="sm"
           onClick={() => switchMode("longBreak")}
+          disabled={isRunning}
           className={`flex-1 h-8 text-xs ${
             mode === "longBreak"
               ? "bg-blue-600 hover:bg-blue-700 text-white"
@@ -212,8 +465,15 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
               ? "Focus Time"
               : mode === "shortBreak"
               ? "Short Break"
-              : "Long Break"}
+              : mode === "longBreak"
+              ? "Long Break"
+              : "Ready"}
           </div>
+          {lastSyncTime && (
+            <div className={`text-[10px] mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+              Synced with buddy
+            </div>
+          )}
         </div>
       </div>
 
@@ -222,7 +482,8 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
         <Button
           variant="default"
           size="sm"
-          onClick={handlePlayPause}
+          onClick={() => void handlePlayPause()}
+          disabled={isSyncing}
           className={`flex-1 h-9 ${
             mode === "focus"
               ? "bg-purple-600 hover:bg-purple-700"
@@ -231,7 +492,9 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
               : "bg-blue-600 hover:bg-blue-700"
           } text-white`}
         >
-          {isRunning ? (
+          {isSyncing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : isRunning ? (
             <>
               <Pause className="w-4 h-4 mr-2" />
               Pause
@@ -246,7 +509,18 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={handleReset}
+          onClick={() => void handleSkip()}
+          disabled={isSyncing || !isRunning}
+          className={`h-9 w-9 p-0 ${isDark ? "text-gray-300" : ""}`}
+          title="Skip to next phase"
+        >
+          <SkipForward className="w-4 h-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleReset()}
+          disabled={isSyncing}
           className={`h-9 w-9 p-0 ${isDark ? "text-gray-300" : ""}`}
         >
           <RotateCcw className="w-4 h-4" />
@@ -391,10 +665,23 @@ export function PomodoroTimer({ isDark = false }: PomodoroTimerProps) {
                 </span>
               </label>
             </div>
+
+            {/* Save Settings Button */}
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => void handleSaveSettings()}
+              disabled={isSyncing}
+              className="w-full h-8 text-xs bg-purple-600 hover:bg-purple-700 text-white mt-2"
+            >
+              {isSyncing ? (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              ) : null}
+              Save Settings
+            </Button>
           </div>
         </div>
       )}
     </div>
   );
 }
-

@@ -6,9 +6,6 @@ import {
   HumanMessage,
   AIMessage,
 } from "@langchain/core/messages";
-import { db } from "../../../../server/db/index";
-import { pdfChunks, document, users } from "../../../../server/db/schema";
-import { eq, inArray } from "drizzle-orm";
 
 import type { EmotionTag, StudyAgentChatRequest } from "./types";
 import {
@@ -20,12 +17,35 @@ import {
 } from "./emotion";
 import { ensureTrailingEllipses, extractTextContent } from "./utils";
 import { getSystemPrompt } from "./prompts";
+import {
+  multiDocEnsembleSearch,
+  validateDocumentAccess,
+  formatResultsForPrompt,
+} from "~/server/rag";
+import { runStudyBuddyAgent } from "../agentic/orchestrator";
+import type { StudyMode } from "../agentic/types";
 
 /**
  * Study Agent Chat API
  * Provides AI chat responses for the study agent with context awareness
- * Integrated with research learning agent capabilities
+ * Now integrated with the agentic workflow for tool-based actions
  */
+
+// Keywords that trigger the agentic workflow
+const AGENTIC_TRIGGERS = [
+  // Task management
+  "task", "todo", "to-do", "to do", "add a", "create a task", "mark as done",
+  "complete the", "my tasks", "what do i need", "finish", "finished",
+  // Pomodoro timer - expanded triggers
+  "pomodoro", "timer", "focus session", "start studying", "take a break",
+  "pause", "resume", "how much time", "time left", "stop timer", "skip break",
+  "start a timer", "start the timer", "stop the timer", "pause the timer",
+  "start a pomodoro", "start pomodoro", "begin a pomodoro", "start focus",
+  "let's focus", "let me focus", "focus time", "study session",
+  // Note-taking
+  "note", "write down", "remember this", "jot down", "save this", "my notes",
+  "find my", "search notes", "take a note", "add a note",
+];
 
 // Research keywords for detecting research-type questions
 const RESEARCH_KEYWORDS = [
@@ -43,82 +63,11 @@ const RESEARCH_KEYWORDS = [
 const INTRO_KEYWORDS = ["introduce", "discuss the study materials", "study plan"];
 
 /**
- * Fetch document content for selected documents
+ * Check if message should use agentic workflow
  */
-async function fetchDocumentContent(
-  userId: string,
-  selectedDocuments: string[]
-): Promise<{ content: string; titles: string[] }> {
-  const documentTitles: string[] = [];
-  let documentContent = "";
-
-  try {
-    const [userInfo] = await db
-      .select()
-      .from(users)
-      .where(eq(users.userId, userId));
-
-    if (!userInfo) {
-      return { content: "", titles: [] };
-    }
-
-    const companyId = userInfo.companyId;
-    const numericIds = selectedDocuments.map((id) => Number(id));
-
-    const docs = await db
-      .select({
-        id: document.id,
-        title: document.title,
-      })
-      .from(document)
-      .where(eq(document.companyId, companyId));
-
-    const validDocIds = docs
-      .map((d) => d.id)
-      .filter((id) => numericIds.includes(id));
-
-    if (validDocIds.length === 0) {
-      return { content: "", titles: [] };
-    }
-
-    const chunks = await db
-      .select({
-        documentId: pdfChunks.documentId,
-        page: pdfChunks.page,
-        content: pdfChunks.content,
-      })
-      .from(pdfChunks)
-      .where(inArray(pdfChunks.documentId, validDocIds))
-      .orderBy(pdfChunks.documentId, pdfChunks.page);
-
-    const docMap = new Map<number, { title: string; chunks: string[] }>();
-
-    for (const chunk of chunks) {
-      if (!docMap.has(chunk.documentId)) {
-        const doc = docs.find((d) => d.id === chunk.documentId);
-        docMap.set(chunk.documentId, {
-          title: doc?.title ?? `Document ${chunk.documentId}`,
-          chunks: [],
-        });
-      }
-      docMap.get(chunk.documentId)!.chunks.push(chunk.content);
-    }
-
-    const summaries: string[] = [];
-    for (const [, docData] of docMap.entries()) {
-      documentTitles.push(docData.title);
-      const summary = docData.chunks.join("\n\n").substring(0, 2000);
-      summaries.push(`\n\n--- ${docData.title} ---\n${summary}`);
-    }
-
-    documentContent = summaries.join("\n");
-    console.log(`📄 [StudyAgent Chat API] Loaded content from ${docMap.size} documents`);
-
-    return { content: documentContent, titles: documentTitles };
-  } catch (error) {
-    console.error("Error fetching document content:", error);
-    return { content: "", titles: [] };
-  }
+function shouldUseAgenticWorkflow(message: string): boolean {
+  const lowerMessage = message.toLowerCase();
+  return AGENTIC_TRIGGERS.some((trigger) => lowerMessage.includes(trigger));
 }
 
 /**
@@ -191,19 +140,88 @@ export async function POST(request: Request) {
       );
     }
 
+    // Check if we should use the agentic workflow
+    const useAgenticWorkflow = shouldUseAgenticWorkflow(message);
+
+    if (useAgenticWorkflow) {
+      console.log("🤖 [StudyAgent Chat API] Using AGENTIC workflow for this request");
+      
+      // Convert mode to agentic mode type
+      const agenticMode: StudyMode = mode === "teacher" ? "teacher" : "study-buddy";
+
+      // Run the agentic workflow
+      const agentResponse = await runStudyBuddyAgent({
+        message,
+        mode: agenticMode,
+        userId,
+        // sessionId: sessionId, ignore sessionID for now, all users share the same session
+        fieldOfStudy,
+        selectedDocuments,
+        conversationHistory: conversationHistory?.map((msg) => ({
+          role: msg.role === "user" ? "user" : "assistant",
+          content: msg.content,
+        })),
+      });
+
+      console.log("🤖 [StudyAgent Chat API] Agentic response generated:");
+      console.log("   Tools used:", agentResponse.toolsUsed.join(", ") || "none");
+      console.log("   Processing time:", agentResponse.processingTimeMs, "ms");
+      console.log("   Emotion:", agentResponse.emotion);
+
+      // Return the agentic response
+      return NextResponse.json(
+        {
+          response: agentResponse.response,
+          originalResponse: agentResponse.displayResponse,
+          emotion: agentResponse.emotion,
+          mode: agentResponse.mode,
+          // Include generated content for frontend to handle
+          toolsUsed: agentResponse.toolsUsed,
+          // Indicate this was an agentic response
+          isAgenticResponse: true,
+        },
+        { status: 200 }
+      );
+    }
+
+    // Standard chat flow for non-agentic requests
+    console.log("💬 [StudyAgent Chat API] Using STANDARD chat workflow");
+
     // Detect message intent
     const lowerMessage = message.toLowerCase();
     const needsResearch = RESEARCH_KEYWORDS.some((kw) => lowerMessage.includes(kw));
     const isIntroduction = INTRO_KEYWORDS.some((kw) => lowerMessage.includes(kw));
 
-    // Fetch document content if needed
+    // Use RAG to fetch relevant document content based on user's query
     let documentContent = "";
     let documentTitles: string[] = [];
 
     if (selectedDocuments && selectedDocuments.length > 0) {
-      const result = await fetchDocumentContent(userId, selectedDocuments);
-      documentContent = result.content;
-      documentTitles = result.titles;
+      console.log("🔍 [StudyAgent Chat API] Using RAG to retrieve relevant content...");
+      
+      // Validate document access and get titles
+      const { validDocIds, documentTitles: titleMap } = await validateDocumentAccess(
+        userId,
+        selectedDocuments
+      );
+      
+      documentTitles = Array.from(titleMap.values());
+
+      if (validDocIds.length > 0) {
+        // Use RAG search to find relevant chunks based on the user's message
+        const ragResults = await multiDocEnsembleSearch(message, {
+          documentIds: validDocIds,
+          topK: 8,
+          weights: [0.4, 0.6], // BM25 weight, Vector weight
+        });
+
+        // Format RAG results for the prompt
+        documentContent = formatResultsForPrompt(ragResults, titleMap);
+        
+        console.log(
+          `📄 [StudyAgent Chat API] RAG retrieved ${ragResults.length} relevant chunks from ${validDocIds.length} documents`
+        );
+      }
     }
 
     // Build docs info string
@@ -269,6 +287,7 @@ export async function POST(request: Request) {
         originalResponse: displayScript,
         emotion,
         mode,
+        isAgenticResponse: false,
       },
       { status: 200 }
     );

@@ -18,6 +18,7 @@ interface StudyBuddyPanelProps {
   studyPlan: StudyPlanItem[];
   documents: Document[];
   notes: Note[];
+  sessionId?: number | null;
   selectedDocument: Document | null;
   onSendMessage: (content: string) => void;
   onEndCall?: () => void;
@@ -31,6 +32,7 @@ interface StudyBuddyPanelProps {
   onDeleteNote: (noteId: string) => void;
   onToggleSidebar?: () => void;
   isDark?: boolean;
+  errorMessage?: string | null;
 }
 
 export function StudyBuddyPanel({
@@ -51,6 +53,8 @@ export function StudyBuddyPanel({
   onDeleteNote,
   onToggleSidebar,
   isDark = false,
+  errorMessage,
+  sessionId,
 }: StudyBuddyPanelProps) {
   void _selectedDocument; // Unused but required by interface
   const [isCreating, setIsCreating] = useState(false);
@@ -198,23 +202,23 @@ export function StudyBuddyPanel({
 
       {/* Tabs for Study Plan and AI Query - Scrollable Container */}
       <Tabs defaultValue="plan" className="flex-1 flex flex-col min-h-0">
-        <div className={`flex-shrink-0 border-b px-4 pt-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-          <TabsList className={`w-full grid grid-cols-4 ${isDark ? 'bg-slate-800' : ''}`}>
-            <TabsTrigger value="plan">Plan</TabsTrigger>
-            <TabsTrigger value="notes">
+        <div className={`flex-shrink-0 border-b px-4 py-3 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+          <TabsList className={`w-full grid grid-cols-4 h-9 ${isDark ? 'bg-slate-800' : ''}`}>
+            <TabsTrigger value="plan" className="text-xs">Plan</TabsTrigger>
+            <TabsTrigger value="notes" className="text-xs">
               <FileText className="w-3 h-3 mr-1" />
               Notes
             </TabsTrigger>
-            <TabsTrigger value="timer">
+            <TabsTrigger value="timer" className="text-xs">
               <Timer className="w-3 h-3 mr-1" />
               Timer
             </TabsTrigger>
-            <TabsTrigger value="query">Query</TabsTrigger>
+            <TabsTrigger value="query" className="text-xs">Query</TabsTrigger>
           </TabsList>
         </div>
 
         {/* Study Plan Tab */}
-        <TabsContent value="plan" className="flex-1 overflow-y-auto p-4 m-0 data-[state=active]:block">
+        <TabsContent value="plan" className="flex-1 overflow-y-auto p-4 mt-0 data-[state=active]:block data-[state=inactive]:hidden">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className={`text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>Your Study Plan</h3>
@@ -225,6 +229,11 @@ export function StudyBuddyPanel({
             <p className={`text-sm mb-3 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Customize your learning journey
             </p>
+            {errorMessage && (
+              <p className="mb-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+                {errorMessage}
+              </p>
+            )}
             <Button
               onClick={handleStartCreate}
               className="w-full bg-blue-600 hover:bg-blue-700"
@@ -411,21 +420,23 @@ export function StudyBuddyPanel({
         </TabsContent>
 
         {/* Timer Tab */}
-        <TabsContent value="timer" className="flex-1 overflow-y-auto p-4 m-0 data-[state=active]:block">
-          <div className="space-y-4">
-            <div>
+        <TabsContent value="timer" className="flex-1 overflow-y-auto p-4 mt-0 data-[state=active]:block data-[state=inactive]:hidden">
+          <div className="h-full flex flex-col">
+            <div className="mb-4">
               <h3 className={`text-lg mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>Pomodoro Timer</h3>
-              <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Stay focused with the Pomodoro Technique
               </p>
             </div>
             
-            <PomodoroTimer isDark={isDark} />
+            <div className="flex-1 flex items-start justify-center pt-4">
+              <PomodoroTimer isDark={isDark} sessionId={sessionId} />
+            </div>
           </div>
         </TabsContent>
 
         {/* AI Query Tab */}
-        <TabsContent value="query" className="flex-1 flex flex-col m-0 data-[state=active]:flex">
+        <TabsContent value="query" className="flex-1 flex flex-col mt-0 data-[state=active]:flex data-[state=inactive]:hidden">
           <AIQueryChat 
             isBuddy={true}
             isDark={isDark}
@@ -433,7 +444,7 @@ export function StudyBuddyPanel({
         </TabsContent>
 
         {/* Notes Tab */}
-        <TabsContent value="notes" className="flex-1 overflow-y-auto p-4 m-0 data-[state=active]:block">
+        <TabsContent value="notes" className="flex-1 overflow-y-auto p-4 mt-0 data-[state=active]:block data-[state=inactive]:hidden">
           <NotesTab
             notes={notes}
             editingNoteId={editingNoteId}
