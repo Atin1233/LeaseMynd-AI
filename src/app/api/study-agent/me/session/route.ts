@@ -26,7 +26,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json().catch(() => ({}));
+        const body = (await request.json().catch(() => ({}))) as {
+            name?: string;
+            mode?: string;
+        };
         const name = typeof body?.name === "string" && body.name.trim().length > 0
             ? body.name.trim()
             : undefined;

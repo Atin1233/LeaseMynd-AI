@@ -66,10 +66,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = (await request.json()) as {
+            sessionId?: number | string;
+            focusMinutes?: number;
+            shortBreakMinutes?: number;
+            longBreakMinutes?: number;
+            sessionsBeforeLongBreak?: number;
+            autoStartBreaks?: boolean;
+            autoStartPomodoros?: boolean;
+        };
         const session = await resolveSessionForUser(
             userId,
-            body.sessionId ?? parseSessionId(request)
+            typeof body.sessionId === "number" || typeof body.sessionId === "string"
+                ? body.sessionId
+                : parseSessionId(request)
         );
 
         if (!session) {

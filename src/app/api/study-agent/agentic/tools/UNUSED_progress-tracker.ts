@@ -47,7 +47,7 @@ export async function trackProgress(
           id: uuidv4(),
           userId: input.userId,
           startTime: new Date(),
-          mode: (input.data?.mode ?? "study-buddy")!,
+          mode: input.data?.mode ?? "study-buddy",
           documentsStudied: input.data?.documentsStudied ?? [],
           conceptsCovered: input.data?.conceptsCovered ?? [],
           quizzesTaken: input.data?.quizzesTaken ?? [],
@@ -217,7 +217,7 @@ export const progressTrackerTool = tool(
       
       const result = await trackProgress({
         sessionId: input.sessionId ?? "",
-        action: validAction as "start" | "update" | "complete",
+        action: validAction,
         userId: input.userId,
         data: input.data,
       });

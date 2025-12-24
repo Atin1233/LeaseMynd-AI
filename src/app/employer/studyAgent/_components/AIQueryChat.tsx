@@ -24,7 +24,7 @@ export function AIQueryChat({ isBuddy = false, isDark = false }: AIQueryChatProp
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AIModel>("gpt4");
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -57,19 +57,26 @@ export function AIQueryChat({ isBuddy = false, isDark = false }: AIQueryChatProp
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Request failed with status ${response.status}`);
+        const errorData = (await response.json().catch(() => ({}))) as {
+          message?: string;
+        };
+        throw new Error(errorData.message ?? `Request failed with status ${response.status}`);
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        summarizedAnswer?: string;
+        aiModel?: string;
+      };
       
       if (!data.success) {
-        throw new Error(data.message || "Failed to get AI response");
+        throw new Error(data.message ?? "Failed to get AI response");
       }
 
       return {
-        content: data.summarizedAnswer || "I apologize, but I couldn't generate a response.",
-        model: data.aiModel || selectedModel,
+        content: data.summarizedAnswer ?? "I apologize, but I couldn't generate a response.",
+        model: data.aiModel ?? selectedModel,
       };
     } catch (err) {
       console.error("Error calling AI Assistant API:", err);
@@ -133,7 +140,7 @@ export function AIQueryChat({ isBuddy = false, isDark = false }: AIQueryChatProp
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e);
+      void handleSubmit(e);
     }
   };
 

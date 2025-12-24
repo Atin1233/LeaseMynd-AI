@@ -74,7 +74,7 @@ export async function generateQuiz(input: QuizGenerationInput): Promise<Quiz> {
       timeout: 45000,
     });
 
-    const typesList = input.questionTypes?.join(", ") || "multiple-choice, true-false";
+    const typesList = input.questionTypes?.join(", ") ?? "multiple-choice, true-false";
     const difficultyInstruction =
       input.difficulty === "mixed"
         ? "Create a mix of easy, medium, and hard questions."

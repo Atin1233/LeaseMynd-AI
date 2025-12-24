@@ -48,13 +48,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: result.success,
-      notes: result.notes ?? [],
+      notes: (result.notes ?? []) as unknown[],
       message: result.message,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error("Failed to get notes");
     console.error("Error getting notes:", error);
     return NextResponse.json(
-      { error: "Failed to get notes" },
+      { error: error.message },
       { status: 500 }
     );
   }
@@ -70,9 +71,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { action, noteId, data, searchQuery, sessionId } = body as {
-      action: "create" | "update" | "delete" | "get" | "summarize";
+    const body = (await request.json()) as {
+      action?: "create" | "update" | "delete" | "get" | "summarize";
       noteId?: string;
       data?: {
         title?: string;
@@ -87,6 +87,7 @@ export async function POST(request: Request) {
       searchQuery?: string;
       sessionId?: number;
     };
+    const { action, noteId, data, searchQuery, sessionId } = body;
 
     if (!action) {
       return NextResponse.json({ error: "Action is required" }, { status: 400 });
@@ -103,15 +104,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: result.success,
-      note: result.note,
-      notes: result.notes,
-      summary: result.summary,
+      note: result.note as unknown,
+      notes: result.notes as unknown,
+      summary: result.summary as unknown,
       message: result.message,
     });
-  } catch (error) {
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error("Failed to manage note");
     console.error("Error managing note:", error);
     return NextResponse.json(
-      { error: "Failed to manage note" },
+      { error: error.message },
       { status: 500 }
     );
   }

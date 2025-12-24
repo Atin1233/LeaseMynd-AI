@@ -92,7 +92,11 @@ export default function OnboardingPage() {
         throw new Error("Failed to start a study session");
       }
 
-      const sessionData = await sessionResponse.json();
+      const sessionData = (await sessionResponse.json()) as {
+        session?: {
+          id?: string | number;
+        };
+      };
       const sessionId = sessionData.session?.id;
 
       if (!sessionId) {
