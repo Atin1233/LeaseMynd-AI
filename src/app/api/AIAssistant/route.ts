@@ -312,7 +312,7 @@ export async function POST(request: Request) {
                 retrievalMethod = 'company_fallback_failed';
                 documents = [];
             } else if (searchScope === "document" && documentId) {
-                retrievalMethod = 'ann_fallback';
+                retrievalMethod = 'ann_hybrid';
                 
                 try {
                     const questionEmbedding = await embeddings.embedQuery(question);
@@ -330,7 +330,7 @@ export async function POST(request: Request) {
                             page: result.page,
                             documentId: result.documentId,
                             distance: 1 - result.confidence,
-                            source: 'ann_fallback',
+                            source: 'ann_hybrid',
                             searchScope: 'document' as const,
                             retrievalMethod: 'ann_hybrid' as const,
                             timestamp: new Date().toISOString()
@@ -339,7 +339,7 @@ export async function POST(request: Request) {
 
                 } catch (annError) {
                     console.warn(`⚠️ [Q&A-ANN] ANN search also failed, falling back to traditional search:`, annError);
-                    retrievalMethod = 'traditional_fallback';
+                    retrievalMethod = 'bm25_fallback';
                     
                     const questionEmbedding = await embeddings.embedQuery(question);
                     const bracketedEmbedding = `[${questionEmbedding.join(",")}]`;
@@ -363,7 +363,7 @@ export async function POST(request: Request) {
                             chunkId: row.id,
                             page: row.page,
                             distance: row.distance,
-                            source: 'traditional_fallback',
+                            source: 'bm25_fallback',
                             searchScope: 'document' as const,
                             retrievalMethod: 'bm25_fallback' as const,
                             timestamp: new Date().toISOString()
