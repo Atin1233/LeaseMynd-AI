@@ -101,18 +101,6 @@ export interface ConceptExplanation {
   commonMisconceptions?: string[];
 }
 
-export interface StudyPlanItem {
-  id: string;
-  title: string;
-  description: string;
-  objectives: string[];
-  estimatedDuration: number; // in minutes
-  materials: string[];
-  completed: boolean;
-  priority: "high" | "medium" | "low";
-  dueDate?: Date;
-}
-
 export interface StudySession {
   id: string;
   userId: string;
@@ -150,7 +138,6 @@ export interface StudyAgentState {
   
   // Study session context
   currentSession?: StudySession;
-  studyPlan: StudyPlanItem[];
   
   // Generated content
   generatedFlashcards: Flashcard[];
@@ -186,7 +173,6 @@ export interface StudyAgentRequest {
   sessionId?: string;
   fieldOfStudy?: string;
   selectedDocuments?: string[];
-  studyPlan?: StudyPlanItem[];
   conversationHistory?: Array<{
     role: "user" | "assistant";
     content: string;
@@ -209,7 +195,6 @@ export interface StudyAgentResponse {
   flashcards?: Flashcard[];
   quiz?: Quiz;
   conceptExplanation?: ConceptExplanation;
-  updatedStudyPlan?: StudyPlanItem[];
   
   // Metadata
   toolsUsed: string[];
@@ -262,7 +247,6 @@ export interface StudyPlanInput {
   goals: string[];
   availableTime: number; // in minutes
   topics: string[];
-  existingPlan?: StudyPlanItem[];
 }
 
 export interface ProgressTrackingInput {

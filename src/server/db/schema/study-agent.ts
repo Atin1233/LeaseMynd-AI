@@ -11,6 +11,7 @@ export const studyAgentSessions = pgTable(
         id: serial("id").primaryKey(),
         userId: varchar("user_id", { length: 256 }).notNull(),
         name: text("name").notNull().default("Default Session"),
+        mode: varchar("mode", { length: 32 }).notNull().default("teacher"),
         createdAt: timestamp("created_at", { withTimezone: true })
             .default(sql`CURRENT_TIMESTAMP`)
             .notNull(),
