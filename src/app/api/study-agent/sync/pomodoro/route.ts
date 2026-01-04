@@ -56,9 +56,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { action, taskId, settings, sessionId } = body as {
-      action: "start" | "pause" | "resume" | "stop" | "skip" | "configure";
+    const body = (await request.json()) as {
+      action?: "start" | "pause" | "resume" | "stop" | "skip" | "configure";
       taskId?: string;
       settings?: {
         workDuration?: number;
@@ -66,10 +65,11 @@ export async function POST(request: Request) {
         longBreakDuration?: number;
         sessionsBeforeLongBreak?: number;
         autoStartBreaks?: boolean;
-        autoStartWork?: boolean;
+        autoStartPomodoros?: boolean;
       };
-      sessionId?: number | string;
+      sessionId?: number;
     };
+    const { action, taskId, settings, sessionId } = body;
 
     if (!action) {
       return NextResponse.json({ error: "Action is required" }, { status: 400 });

@@ -198,7 +198,7 @@ export async function runStudyBuddyAgent(
     traceStep(trace, "invoke_graph_end");
 
     // 5) Extract final response from the final state
-    const finalState = result as StudyAgentState;
+    const finalState = result;
     const lastMessage = finalState.messages[finalState.messages.length - 1];
 
     const rawResponseText =
@@ -294,7 +294,8 @@ function extractTextFromContent(content: unknown): string {
       .map((item) => {
         if (typeof item === "string") return item;
         if (item && typeof item === "object" && "text" in item) {
-          return String((item as any).text);
+          const textItem = item as { text: unknown };
+          return String(textItem.text);
         }
         return "";
       })
@@ -302,7 +303,8 @@ function extractTextFromContent(content: unknown): string {
   }
 
   if (content && typeof content === "object" && "text" in content) {
-    return String((content as any).text);
+    const textContent = content as { text: unknown };
+    return String(textContent.text);
   }
 
   return "";
@@ -367,12 +369,12 @@ function extractRelatedTopics(state: StudyAgentState): string[] {
   }
 
   for (const card of state.generatedFlashcards) {
-    if ((card as any).topic) topics.add(String((card as any).topic));
+    if (card.topic) topics.add(card.topic);
   }
 
   for (const quiz of state.generatedQuizzes) {
-    for (const question of (quiz as any).questions ?? []) {
-      if (question?.topic) topics.add(String(question.topic));
+    for (const question of quiz.questions) {
+      if (question.topic) topics.add(question.topic);
     }
   }
 
@@ -423,8 +425,8 @@ export async function* streamStudyBuddyAgent(
     let sawRetrieveStart = false;
 
     for await (const state of stream) {
-      lastState = state as StudyAgentState;
-      const typedState = state as StudyAgentState;
+      lastState = state;
+      const typedState = state;
 
       // Example: emit tool start when we enter retrieve step
       if (typedState.currentStep === "retrieve" && !sawRetrieveStart) {

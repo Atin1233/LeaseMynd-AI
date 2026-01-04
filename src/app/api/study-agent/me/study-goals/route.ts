@@ -70,10 +70,27 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = (await request.json()) as {
+            sessionId?: number | string;
+            items?: Array<{
+                title?: string;
+                description?: string | null;
+                materials?: string[];
+                completed?: boolean;
+            }>;
+            title?: string;
+            description?: string | null;
+            materials?: string[];
+            completed?: boolean;
+            id?: string | number;
+        };
         const session = await resolveSessionForUser(
             userId,
-            body.sessionId ?? parseSessionId(request)
+            typeof body.sessionId === "number"
+                ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
+                : parseSessionId(request)
         );
 
         if (!session) {
@@ -94,9 +111,9 @@ export async function POST(request: Request) {
             const inserted = await db
                 .insert(studyAgentGoals)
                 .values(
-                    body.items.map((item: any) => ({
+                    body.items.map((item) => ({
                         userId,
-                        sessionId: session.id,
+                        sessionId: BigInt(session.id),
                         title: item.title ?? "",
                         description: item.description ?? null,
                         materials: item.materials ?? [],
@@ -138,14 +155,25 @@ export async function PUT(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = (await request.json()) as {
+            id?: string | number;
+            sessionId?: number | string;
+            title?: string;
+            description?: string | null;
+            materials?: string[];
+            completed?: boolean;
+        };
         if (!body.id) {
             return NextResponse.json({ error: "Goal ID is required" }, { status: 400 });
         }
 
         const session = await resolveSessionForUser(
             userId,
-            body.sessionId ?? parseSessionId(request)
+            typeof body.sessionId === "number"
+                ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
+                : parseSessionId(request)
         );
 
         if (!session) {
@@ -187,14 +215,21 @@ export async function DELETE(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = (await request.json()) as {
+            id?: string | number;
+            sessionId?: number | string;
+        };
         if (!body.id) {
             return NextResponse.json({ error: "Goal ID is required" }, { status: 400 });
         }
 
         const session = await resolveSessionForUser(
             userId,
-            body.sessionId ?? parseSessionId(request)
+            typeof body.sessionId === "number"
+                ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
+                : parseSessionId(request)
         );
 
         if (!session) {

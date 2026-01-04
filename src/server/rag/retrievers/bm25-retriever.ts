@@ -22,10 +22,11 @@ export async function getDocumentChunks(documentId: number): Promise<ChunkRow[]>
       documentId: pdfChunks.documentId,
     })
     .from(pdfChunks)
-    .where(eq(pdfChunks.documentId, documentId));
+    .where(eq(pdfChunks.documentId, BigInt(documentId)));
 
   return rows.map((r) => ({
     ...r,
+    documentId: Number(r.documentId),
     documentTitle: undefined,
   }));
 }
@@ -44,9 +45,12 @@ export async function getCompanyChunks(companyId: number): Promise<ChunkRow[]> {
     })
     .from(pdfChunks)
     .innerJoin(document, eq(pdfChunks.documentId, document.id))
-    .where(eq(document.companyId, companyId));
+    .where(eq(document.companyId, BigInt(companyId)));
 
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    documentId: Number(r.documentId),
+  }));
 }
 
 /**
@@ -67,9 +71,12 @@ export async function getMultiDocChunks(documentIds: number[]): Promise<ChunkRow
     })
     .from(pdfChunks)
     .innerJoin(document, eq(pdfChunks.documentId, document.id))
-    .where(inArray(pdfChunks.documentId, documentIds));
+    .where(inArray(pdfChunks.documentId, documentIds.map(id => BigInt(id))));
 
-  return rows;
+  return rows.map((r) => ({
+    ...r,
+    documentId: Number(r.documentId),
+  }));
 }
 
 /**

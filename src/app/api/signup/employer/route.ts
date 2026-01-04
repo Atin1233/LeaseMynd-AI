@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     try {
         const {userId, name, email, employerPasskey, companyName} = (await request.json()) as PostBody;
 
-        let companyId: string;
+        let companyId: bigint;
         const [existingCompany] = await db
             .select()
             .from(company)
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         }
 
         // eslint-disable-next-line prefer-const
-        companyId = existingCompany.id.toString();
+        companyId = BigInt(existingCompany.id);
 
         await db.insert(users).values({
             userId,

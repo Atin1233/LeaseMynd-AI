@@ -35,10 +35,36 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const body = await request.json();
+        const body = (await request.json()) as {
+            sessionId?: number | string;
+            messages?: Array<{
+                originalId?: string;
+                role: string;
+                content: string;
+                ttsContent?: string;
+                attachedDocument?: string;
+                attachedDocumentId?: string;
+                attachedDocumentUrl?: string;
+                isVoice?: boolean;
+                createdAt?: string;
+            }>;
+            originalId?: string;
+            role?: string;
+            content?: string;
+            ttsContent?: string;
+            attachedDocument?: string;
+            attachedDocumentId?: string;
+            attachedDocumentUrl?: string;
+            isVoice?: boolean;
+            createdAt?: string;
+        };
         const session = await resolveSessionForUser(
             userId,
-            body.sessionId ?? parseSessionId(request)
+            typeof body.sessionId === "number"
+                ? body.sessionId
+                : typeof body.sessionId === "string"
+                ? Number(body.sessionId)
+                : parseSessionId(request)
         );
 
         if (!session) {
@@ -49,17 +75,7 @@ export async function POST(request: Request) {
 
         // Handle batch insert for multiple messages
         if (Array.isArray(body.messages)) {
-            const toInsert = body.messages.map((msg: {
-                originalId?: string;
-                role: string;
-                content: string;
-                ttsContent?: string;
-                attachedDocument?: string;
-                attachedDocumentId?: string;
-                attachedDocumentUrl?: string;
-                isVoice?: boolean;
-                createdAt?: string;
-            }) => ({
+            const toInsert = body.messages.map((msg) => ({
                 odlId: msg.originalId ?? null,
                 userId,
                 sessionId: sessionIdBigInt,
@@ -84,21 +100,38 @@ export async function POST(request: Request) {
         }
 
         // Single message insert
+        const roleValue: string = body.role ?? '';
+        const contentValue: string = body.content ?? '';
+        const messageValues: {
+            userId: string;
+            sessionId: bigint;
+            role: string;
+            content: string;
+            ttsContent: string | null;
+            attachedDocument: string | null;
+            attachedDocumentId: string | null;
+            attachedDocumentUrl: string | null;
+            isVoice: boolean;
+            createdAt: Date;
+            odlId?: string;
+        } = {
+            userId,
+            sessionId: sessionIdBigInt,
+            role: roleValue,
+            content: contentValue,
+            ttsContent: body.ttsContent ?? null,
+            attachedDocument: body.attachedDocument ?? null,
+            attachedDocumentId: body.attachedDocumentId ?? null,
+            attachedDocumentUrl: body.attachedDocumentUrl ?? null,
+            isVoice: Boolean(body.isVoice),
+            createdAt: body.createdAt ? new Date(body.createdAt) : new Date(),
+        };
+        if (body.originalId) {
+            messageValues.odlId = body.originalId;
+        }
         const [created] = await db
             .insert(studyAgentMessages)
-            .values({
-                odlId: body.originalId ?? null,
-                userId,
-                sessionId: sessionIdBigInt,
-                role: body.role,
-                content: body.content,
-                ttsContent: body.ttsContent ?? null,
-                attachedDocument: body.attachedDocument ?? null,
-                attachedDocumentId: body.attachedDocumentId ?? null,
-                attachedDocumentUrl: body.attachedDocumentUrl ?? null,
-                isVoice: Boolean(body.isVoice),
-                createdAt: body.createdAt ? new Date(body.createdAt) : new Date(),
-            })
+            .values(messageValues)
             .returning();
 
         if (!created) {

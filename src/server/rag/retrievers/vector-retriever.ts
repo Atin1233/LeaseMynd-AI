@@ -59,11 +59,11 @@ export class VectorRetriever extends BaseRetriever {
     this.searchScope = fields.searchScope;
 
     if (fields.searchScope === "document") {
-      this.documentId = (fields as SingleDocConfig).documentId;
+      this.documentId = fields.documentId;
     } else if (fields.searchScope === "company") {
-      this.companyId = (fields as CompanyConfig).companyId;
+      this.companyId = fields.companyId;
     } else if (fields.searchScope === "multi-document") {
-      this.documentIds = (fields as MultiDocConfig).documentIds;
+      this.documentIds = fields.documentIds;
     }
   }
 

@@ -74,7 +74,7 @@ export async function generateQuiz(input: QuizGenerationInput): Promise<Quiz> {
       timeout: 45000,
     });
 
-    const typesList = input.questionTypes?.join(", ") || "multiple-choice, true-false";
+    const typesList = input.questionTypes?.join(", ") ?? "multiple-choice, true-false";
     const difficultyInstruction =
       input.difficulty === "mixed"
         ? "Create a mix of easy, medium, and hard questions."
@@ -100,7 +100,7 @@ ${input.context.substring(0, 8000)}`,
         : JSON.stringify(response.content);
 
     // Parse JSON response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonMatch = /\{[\s\S]*\}/.exec(content);
     if (!jsonMatch) {
       throw new Error("Failed to parse quiz response");
     }

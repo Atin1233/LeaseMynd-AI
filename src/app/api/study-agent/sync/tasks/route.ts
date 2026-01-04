@@ -56,9 +56,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { action, taskId, data } = body as {
-      action: "create" | "update" | "delete" | "complete";
+    const body = (await request.json()) as {
+      action?: "create" | "update" | "delete" | "complete";
       taskId?: string;
       data?: {
         title?: string;
@@ -67,9 +66,11 @@ export async function POST(request: Request) {
         dueDate?: string;
         estimatedMinutes?: number;
         tags?: string[];
+        relatedDocuments?: string[];
         status?: "pending" | "in_progress" | "completed" | "cancelled";
       };
     };
+    const { action, taskId, data } = body;
 
     if (!action) {
       return NextResponse.json({ error: "Action is required" }, { status: 400 });

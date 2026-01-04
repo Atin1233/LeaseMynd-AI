@@ -27,7 +27,7 @@ interface EnrichedWebResult extends WebSearchResult {
  */
 export async function performWebResearch(
   query: string,
-  maxResults: number = 5,
+  maxResults = 5,
   searchType: "general" | "academic" | "news" = "general"
 ): Promise<{
   results: EnrichedWebResult[];

@@ -104,7 +104,7 @@ export function useVAD(options: UseVADOptions = {}) {
       const error = err instanceof Error ? err : new Error("Failed to start VAD");
       onErrorRef.current?.(error);
     }
-  }, [positiveSpeechThreshold, negativeSpeechThreshold, redemptionMs, preSpeechPadMs]);
+  }, [positiveSpeechThreshold, negativeSpeechThreshold, redemptionMs, preSpeechPadMs, minSpeechMs]);
 
   const pause = useCallback(() => {
     if (vadRef.current) {

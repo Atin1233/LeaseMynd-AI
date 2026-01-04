@@ -38,7 +38,7 @@ export async function POST(request: Request) {
             userId,
             name: name,
             email: email,
-            companyId: existingCompany.id.toString(),
+            companyId: BigInt(existingCompany.id),
             status: "pending",
             role: "employee",
         });

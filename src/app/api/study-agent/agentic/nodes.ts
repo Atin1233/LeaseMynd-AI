@@ -8,7 +8,7 @@ import { ToolNode } from "@langchain/langgraph/prebuilt";
 import {
   SystemMessage,
   HumanMessage,
-  AIMessage,
+  type AIMessage,
   type BaseMessage,
 } from "@langchain/core/messages";
 

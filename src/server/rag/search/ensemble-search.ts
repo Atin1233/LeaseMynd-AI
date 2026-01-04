@@ -7,7 +7,6 @@ import { EnsembleRetriever } from "langchain/retrievers/ensemble";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { BM25Retriever } from "@langchain/community/retrievers/bm25";
 import {
-  VectorRetriever,
   createDocumentVectorRetriever,
   createCompanyVectorRetriever,
   createMultiDocVectorRetriever,

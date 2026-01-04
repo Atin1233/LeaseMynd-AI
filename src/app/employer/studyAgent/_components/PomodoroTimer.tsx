@@ -68,7 +68,10 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
       const response = await fetch(url.toString());
       if (!response.ok) return;
 
-      const data = await response.json();
+      const data = (await response.json()) as {
+        session?: Partial<PomodoroSession>;
+        timeRemaining?: string | null;
+      };
       const session: Partial<PomodoroSession> | null = data.session ?? null;
 
       if (session?.settings) {
@@ -102,7 +105,7 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
           : mode === "longBreak"
           ? longBreakDuration * 60
           : focusDuration * 60;
-      const remainingFromStatus = parseTimeString(data.timeRemaining);
+      const remainingFromStatus = data.timeRemaining ? parseTimeString(data.timeRemaining) : null;
       if (session?.endsAt) {
         const endsAt = new Date(session.endsAt);
         const remainingSeconds = Math.max(
@@ -110,7 +113,7 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
           Math.floor((endsAt.getTime() - Date.now()) / 1000)
         );
         setTimeLeft(remainingSeconds || durationSeconds);
-      } else if (remainingFromStatus !== undefined) {
+      } else if (remainingFromStatus !== undefined && remainingFromStatus !== null) {
         setTimeLeft(remainingFromStatus);
       }
 
@@ -146,7 +149,7 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
       intervalRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            handleTimerComplete();
+            void handleTimerComplete();
             return 0;
           }
           return prev - 1;
@@ -195,7 +198,16 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
           throw new Error("Failed to fetch settings");
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as {
+          pomodoroSettings?: {
+            focusMinutes?: number;
+            shortBreakMinutes?: number;
+            longBreakMinutes?: number;
+            sessionsBeforeLongBreak?: number;
+            autoStartBreaks?: boolean;
+            autoStartPomodoros?: boolean;
+          };
+        };
         const settings = data.pomodoroSettings ?? {};
         setFocusDuration(settings.focusMinutes ?? 25);
         setShortBreakDuration(settings.shortBreakMinutes ?? 5);
@@ -261,6 +273,7 @@ export function PomodoroTimer({ isDark = false, sessionId }: PomodoroTimerProps)
     sessionsBeforeLongBreak,
     autoStartBreaks,
     autoStartPomodoros,
+    sessionId,
   ]);
 
   const handleTimerComplete = async () => {

@@ -43,10 +43,19 @@ export async function GET(request: Request) {
         );
 
         if (!session) {
-            return NextResponse.json({ error: "Session not found" }, { status: 404 });
+            // No session yet - user hasn't completed onboarding
+            return NextResponse.json({
+                session: null,
+                profile: null,
+                preferences: null,
+                goals: [],
+                notes: [],
+                pomodoroSettings: null,
+                messages: [],
+            });
         }
 
-        const sessionIdBigInt = BigInt(session.id);
+        const sessionIdBigInt = BigInt(session.id || 0);
 
         const [profile] = await db
             .select()
@@ -61,52 +70,27 @@ export async function GET(request: Request) {
         const [preferences] = await db
             .select()
             .from(studyAgentPreferences)
-            .where(
-                and(
-                    eq(studyAgentPreferences.userId, userId),
-                    eq(studyAgentPreferences.sessionId, sessionIdBigInt)
-                )
-            );
+            .where(eq(studyAgentPreferences.sessionId, sessionIdBigInt));
 
         const goals = await db
             .select()
             .from(studyAgentGoals)
-            .where(
-                and(
-                    eq(studyAgentGoals.userId, userId),
-                    eq(studyAgentGoals.sessionId, sessionIdBigInt)
-                )
-            );
+            .where(eq(studyAgentGoals.sessionId, sessionIdBigInt));
 
         const notes = await db
             .select()
             .from(studyAgentNotes)
-            .where(
-                and(
-                    eq(studyAgentNotes.userId, userId),
-                    eq(studyAgentNotes.sessionId, sessionIdBigInt)
-                )
-            );
+            .where(eq(studyAgentNotes.sessionId, sessionIdBigInt));
 
         const [pomodoroSettings] = await db
             .select()
             .from(studyAgentPomodoroSettings)
-            .where(
-                and(
-                    eq(studyAgentPomodoroSettings.userId, userId),
-                    eq(studyAgentPomodoroSettings.sessionId, sessionIdBigInt)
-                )
-            );
+            .where(eq(studyAgentPomodoroSettings.sessionId, sessionIdBigInt));
 
         const messages = await db
             .select()
             .from(studyAgentMessages)
-            .where(
-                and(
-                    eq(studyAgentMessages.userId, userId),
-                    eq(studyAgentMessages.sessionId, sessionIdBigInt)
-                )
-            )
+            .where(eq(studyAgentMessages.sessionId, sessionIdBigInt))
             .orderBy(asc(studyAgentMessages.createdAt));
 
         return NextResponse.json({

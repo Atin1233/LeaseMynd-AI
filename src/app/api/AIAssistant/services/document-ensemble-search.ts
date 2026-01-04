@@ -126,7 +126,7 @@ async function getDocumentChunks(documentId: number): Promise<DocumentChunkRow[]
             page: pdfChunks.page,
         })
         .from(pdfChunks)
-        .where(eq(pdfChunks.documentId, documentId));
+        .where(eq(pdfChunks.documentId, BigInt(documentId)));
 
     return rows;
 }
