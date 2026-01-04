@@ -1,6 +1,7 @@
 /**
  * Note-Taking Tool
- * Create and manage study notes
+ * Role: LangChain tool for creating/updating notes tied to a study session.
+ * Purpose: persist quick notes with tags so the agent can reference later.
  */
 
 import { tool } from "@langchain/core/tools";
@@ -11,6 +12,8 @@ import { studyAgentNotes } from "~/server/db/schema";
 import { resolveSessionForUser } from "~/server/study-agent/session";
 import { and, eq } from "drizzle-orm";
 
+// NOTE: "delete" stays in the schema for backward compatibility with callers,
+// but the handler intentionally rejects it (see switch below).
 const NoteSchema = z.object({
   action: z
     .enum(["create", "update", "delete"]) // TODO: add "search" or "list" actions
@@ -26,6 +29,7 @@ const NoteSchema = z.object({
     })
     .optional()
     .describe("Note data for create/update actions"),
+  sessionId: z.number().describe("Session ID to associate the note"),
 });
 
 /**
@@ -36,7 +40,7 @@ const NoteSchema = z.object({
  * - delete
  */
 export async function manageNotes(
-  input: NoteInput & { userId: string; sessionId?: number | null }
+  input: NoteInput & { userId: string; sessionId: number }
 ): Promise<{
   success: boolean;
   note?: StudyNote;
@@ -44,16 +48,16 @@ export async function manageNotes(
 }> {
   const now = new Date();
 
-  const session = await resolveSessionForUser(input.userId, input.sessionId ?? undefined);
+  const session = await resolveSessionForUser(input.userId, input.sessionId);
   if (!session) {
     return {
       success: false,
-      message: "Unable to find a study session for this user",
+      message: "Unable to find a study session for this user. Please provide a valid sessionId.",
     };
   }
 
   const mapRowToNote = (row: (typeof studyAgentNotes)["$inferSelect"]) => ({
-    id: row.id.toString(),
+    id: row.id,
     userId: row.userId,
     title: row.title ?? "",
     content: row.content ?? "",
@@ -181,6 +185,7 @@ export const noteTakingTool = tool(
         userId: input.userId,
         noteId: input.noteId,
         data: input.data,
+        sessionId: input.sessionId,
       });
 
       return JSON.stringify(result);

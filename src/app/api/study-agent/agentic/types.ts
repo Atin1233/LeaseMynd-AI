@@ -1,6 +1,7 @@
 /**
  * Study Buddy Agent Types
- * Type definitions for the agentic AI workflow
+ * Role: shared type contracts for agent state, API IO, and tool payloads.
+ * Purpose: keep all agentic shapes centralized so tools, nodes, and routes stay in sync.
  */
 
 import type { BaseMessage } from "@langchain/core/messages";
@@ -101,18 +102,6 @@ export interface ConceptExplanation {
   commonMisconceptions?: string[];
 }
 
-export interface StudyPlanItem {
-  id: string;
-  title: string;
-  description: string;
-  objectives: string[];
-  estimatedDuration: number; // in minutes
-  materials: string[];
-  completed: boolean;
-  priority: "high" | "medium" | "low";
-  dueDate?: Date;
-}
-
 export interface StudySession {
   id: string;
   userId: string;
@@ -150,7 +139,6 @@ export interface StudyAgentState {
   
   // Study session context
   currentSession?: StudySession;
-  studyPlan: StudyPlanItem[];
   
   // Generated content
   generatedFlashcards: Flashcard[];
@@ -183,10 +171,9 @@ export interface StudyAgentRequest {
   message: string;
   mode: StudyMode;
   userId: string;
-  sessionId?: string;
+  sessionId: number;
   fieldOfStudy?: string;
   selectedDocuments?: string[];
-  studyPlan?: StudyPlanItem[];
   conversationHistory?: Array<{
     role: "user" | "assistant";
     content: string;
@@ -209,7 +196,6 @@ export interface StudyAgentResponse {
   flashcards?: Flashcard[];
   quiz?: Quiz;
   conceptExplanation?: ConceptExplanation;
-  updatedStudyPlan?: StudyPlanItem[];
   
   // Metadata
   toolsUsed: string[];
@@ -262,7 +248,6 @@ export interface StudyPlanInput {
   goals: string[];
   availableTime: number; // in minutes
   topics: string[];
-  existingPlan?: StudyPlanItem[];
 }
 
 export interface ProgressTrackingInput {
@@ -340,6 +325,7 @@ export interface PomodoroSession {
   completedPomodoros: number;
   totalWorkMinutes: number;
   currentTaskId?: string;
+  remainingSeconds: number;
   settings: PomodoroSettings;
 }
 
@@ -355,7 +341,7 @@ export interface PomodoroInput {
 // ============================================================================
 
 export interface StudyNote {
-  id: string;
+  id: number;
   userId: string;
   title: string;
   content: string;

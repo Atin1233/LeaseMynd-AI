@@ -1,6 +1,7 @@
 /**
  * Graph Nodes Module
- * Node functions for the LangGraph workflow
+ * Role: LangGraph node implementations (understand → plan → agent → tools → respond).
+ * Purpose: define the stepwise agent behavior and routing logic in the compiled graph.
  */
 
 import { ChatOpenAI } from "@langchain/openai";
@@ -70,21 +71,6 @@ export async function planNode(
   const toolsToUse: string[] = [];
 
   switch (state.userIntent) {
-    case "create_flashcards":
-      if (state.selectedDocuments.length > 0) toolsToUse.push("rag_search");
-      toolsToUse.push("generate_flashcards");
-      break;
-
-    case "create_quiz":
-      if (state.selectedDocuments.length > 0) toolsToUse.push("rag_search");
-      toolsToUse.push("generate_quiz");
-      break;
-
-    case "explain_concept":
-      if (state.selectedDocuments.length > 0) toolsToUse.push("rag_search");
-      toolsToUse.push("explain_concept");
-      break;
-
     case "create_study_plan":
       toolsToUse.push("create_study_plan");
       break;
@@ -241,6 +227,7 @@ Only supported note actions are: "create" and "update".
 Call the take_notes tool with:
 - action: "${action}"
 - userId: "${state.userId}"
+- sessionId: "${state.sessionId ?? ""}"
 
 Extract any note content, title, or tags from the user's message.
 After calling the tool, respond with the result in an encouraging way.`;
@@ -260,7 +247,7 @@ export async function agentNode(
   console.log(`   User intent: ${state.userIntent}`);
 
   const model = new ChatOpenAI({
-    modelName: "gpt-4o-mini",
+    modelName: "gpt-5.2",
     temperature: 0.7,
     timeout: 60000,
   }).bindTools(studyBuddyTools);

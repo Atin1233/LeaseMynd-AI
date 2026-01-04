@@ -2,30 +2,102 @@
 
 A Next.js application that uses advanced AI technology to analyze, interpret, and extract insights from professional documents. Features employee/employer authentication, document upload and management, AI-powered chat, and **comprehensive predictive document analysis** that identifies missing documents, provides recommendations, and suggests related content.
 
-## 🚀 Features
+## 🧭 End-to-end workflow (how the features connect)
 
-### 🤖 **Predictive Document Analysis** 
-- **Missing Document Detection**: AI automatically identifies critical documents that should be present but are missing
-- **Priority Assessment**: Categorizes missing documents by priority (high, medium, low) for efficient workflow management
-- **Smart Recommendations**: Provides actionable recommendations for document organization and compliance
-- **Related Document Suggestions**: Suggests relevant external resources and related documents
-- **Page-Level Analysis**: Pinpoints specific pages where missing documents are referenced
-- **Real-time Analysis**: Instant analysis with caching for improved performance
-- **Comprehensive Reporting**: Detailed breakdown of analysis results with actionable insights
+PDR AI is designed as one connected loop: **capture documents → make them searchable → ask questions → spot gaps → act → learn**.
 
-### 📄 **Professional Document Analysis**
-- Advanced AI algorithms analyze documents and extract key information
-- **OCR Processing**: Optional advanced OCR using Datalab Marker API for scanned documents and images
-- **AI-Powered Chat**: Interactive chat interface for document-specific questions and insights
-- **Web Search Agent**: Modern UI with Tailwind CSS
-- **Role-Based Authentication**: Separate interfaces for employees and employers using Clerk
-- **Document Management**: Upload, organize, and manage documents with category support
-- **Employee Management**: Employer dashboard for managing employee access and approvals
-- **Real-time Chat History**: Persistent chat sessions for each document
-- **Responsive Design**: Modern UI with Tailwind CSS
+1. **Authenticate & pick a workspace (Employer / Employee)**  
+   Clerk handles auth and role-based access so employers can manage documents + employees, while employees can view assigned materials.
+
+2. **Upload documents (optionally OCR)**  
+   Documents are uploaded via UploadThing. If a PDF is scanned/image-based, you can enable **OCR** (Datalab Marker API) to extract clean text.
+
+3. **Index & store for retrieval**  
+   The backend chunks the extracted text and generates embeddings, storing everything in PostgreSQL (+ pgvector) so downstream AI features can retrieve the right passages.
+
+4. **Interact with documents (RAG chat + viewer)**  
+   Users open a document in the viewer and ask questions. The AI uses **RAG** over your indexed chunks to answer with document-grounded context, and chat history persists per document/session.
+
+5. **Run Predictive Document Analysis (find gaps and next steps)**  
+   When you need completeness and compliance help, the predictive analyzer highlights **missing documents**, **broken references**, priority/urgency, and recommended actions (see deep dive below).
+
+6. **Study Agent: StudyBuddy + AI Teacher (learn from your own documents)**  
+   Turn uploaded PDFs into a guided study experience. The Study Agent reuses the same ingestion + indexing pipeline so both modes can answer questions with **RAG grounded in your uploaded documents**.
+   - **StudyBuddy mode**: a friendly coach that helps you stay consistent (plan, notes, timer, quick Q&A)
+   - **AI Teacher mode**: a structured instructor with multiple teaching surfaces (view/edit/draw) for lessons
+
+7. **Close the loop**  
+   Use insights from chat + predictive analysis + StudyBuddy sessions to upload missing docs, update categories, and keep your organization’s knowledge base complete and actionable.
 
 ## Web Search Agent Workflow
 <img width="1106" height="336" alt="Screenshot 2025-11-16 at 2 53 18 PM" src="https://github.com/user-attachments/assets/8c2d5ec2-a57e-4afa-97cf-1961dcb9049f" />
+
+## 🎓 Study Agent (StudyBuddy + AI Teacher)
+
+The Study Agent is the “learn it” layer on top of the same document ingestion + RAG stack.
+
+### How sessions work (shared foundation)
+
+1. **Upload or select your study documents** (same documents used for document Q&A / analysis)
+2. **Start onboarding** at `/employer/studyAgent/onboarding`
+3. **Choose mode**: **StudyBuddy** or **AI Teacher**
+4. **Create a study session**:
+   - A new session is created and you’re redirected with `?sessionId=...`
+   - Your **profile** (name/grade/gender/field of study) and **preferences** (selected docs, AI personality) are stored
+   - An initial **study plan** is generated from the documents you selected
+5. **Resume anytime**: session data is loaded using `sessionId` so conversations and study progress persist
+
+### StudyBuddy (friendly coach)
+
+StudyBuddy is optimized for momentum and daily studying while staying grounded in your documents.
+
+- **Document-grounded help (RAG)**: ask questions about your selected PDFs, and the agent retrieves relevant chunks to answer.
+- **Voice chat**:
+  - Speech-to-text via the browser’s Web Speech API
+  - Optional text-to-speech via ElevenLabs (if configured)
+  - Messages are persisted to your session so you can continue later
+- **Study Plan (Goals)**:
+  - Create/edit/delete goals
+  - Mark goals complete/incomplete and track progress
+  - Attach “materials” (documents) to each goal and one-click “pull up” the doc in the viewer
+- **Notes**:
+  - Create/update/delete notes tied to your study session
+  - Tag notes and keep them organized while you study
+- **Pomodoro timer**:
+  - Run focus sessions alongside your plan/notes
+  - Timer state can be synced to your session
+- **AI Query tab**:
+  - A fast Q&A surface for questions while you keep your call / plan visible
+
+### AI Teacher (structured instructor)
+
+AI Teacher is optimized for guided instruction and “teaching by doing” across multiple views.
+
+- **Voice-led teaching + study plan tracking**:
+  - Voice chat for interactive lessons
+  - A persistent study plan with material links (click to open the relevant doc)
+- **Three teaching surfaces (switchable in-session)**:
+  - **View**: document viewer for reading/teaching directly from the selected PDF
+  - **Edit**: a collaborative docs editor where you and the AI can build structured notes/explanations and download the result
+  - **Draw**: a whiteboard for visual explanations (pen/eraser, undo/redo, clear, export as PNG)
+- **AI Query tab**:
+  - Ask targeted questions without interrupting the lesson flow
+
+### Persistence & sync (what’s saved)
+
+Per `sessionId`, the Study Agent persists:
+- **messages** (StudyBuddy/Teacher conversations)
+- **study goals** (plan items + completion state + attached materials)
+- **notes** (StudyBuddy notes + updates)
+- **preferences/profile** (selected documents and learner context)
+
+Key API surfaces used by the Study Agent:
+- `POST /api/study-agent/me/session` (create session)
+- `GET /api/study-agent/me?sessionId=...` (load session data)
+- `POST /api/study-agent/chat` (RAG chat + optional agentic tools for notes/tasks/timer)
+- `POST /api/study-agent/me/messages` (persist chat messages)
+- `POST/PUT/DELETE /api/study-agent/me/study-goals` (plan CRUD)
+- `POST /api/study-agent/sync/notes` (notes sync)
 
 ## 🔍 Predictive Document Analysis Deep Dive
 
@@ -832,6 +904,8 @@ Key directories:
 | `LANGCHAIN_API_KEY` | LangChain API key for LangSmith tracing and monitoring. Required if `LANGCHAIN_TRACING_V2=true`. Get from [LangSmith](https://smith.langchain.com/) | ❌ | `lsv2_...` |
 | `TAVILY_API_KEY` | Tavily Search API key for enhanced web search in document analysis. Get from [Tavily](https://tavily.com/) | ❌ | `tvly-...` |
 | `DATALAB_API_KEY` | Datalab Marker API key for advanced OCR processing of scanned documents. Get from [Datalab](https://www.datalab.to/) | ❌ | `your_datalab_key` |
+| `ELEVENLABS_API_KEY` | ElevenLabs API key for StudyBuddy/Teacher voice (text-to-speech). Get from [ElevenLabs](https://elevenlabs.io/) | ❌ | `your_elevenlabs_key` |
+| `ELEVENLABS_VOICE_ID` | Default ElevenLabs voice ID (optional). | ❌ | `21m00Tcm4TlvDq8ikWAM` |
 | `UPLOADTHING_SECRET` | UploadThing secret key for file uploads. Get from [UploadThing Dashboard](https://uploadthing.com/) | ✅ | `sk_live_...` |
 | `UPLOADTHING_APP_ID` | UploadThing application ID. Get from [UploadThing Dashboard](https://uploadthing.com/) | ✅ | `your_app_id` |
 | `NODE_ENV` | Environment mode. Must be one of: `development`, `test`, `production` | ✅ | `development` |
@@ -846,6 +920,7 @@ Key directories:
 - **AI Observability**: `LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY` (for LangSmith tracing and monitoring)
 - **Search Features**: `TAVILY_API_KEY` (for enhanced web search in document analysis)
 - **OCR Processing**: `DATALAB_API_KEY` (for advanced OCR of scanned documents)
+- **Study Agent Voice (Optional)**: `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`
 - **File Uploads**: `UPLOADTHING_SECRET`, `UPLOADTHING_APP_ID`
 - **Build Configuration**: `NODE_ENV`, `SKIP_ENV_VALIDATION`
 

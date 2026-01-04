@@ -1,19 +1,15 @@
 /**
  * Pomodoro Sync API
- * Syncs the Pomodoro timer state between the agentic workflow and the UI
+ * Role: keep pomodoro timer state in sync between UI and agent tools.
+ * Purpose: expose status + control endpoints wrapping the shared pomodoro tool.
  */
 
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { managePomodoro } from "../../agentic/tools/pomodoro-timer";
+import { parseSessionId } from "../../shared";
 
 export const runtime = "nodejs";
-
-function parseSessionId(request: Request) {
-  const sessionIdParam = new URL(request.url).searchParams.get("sessionId");
-  const parsedSessionId = sessionIdParam ? Number(sessionIdParam) : undefined;
-  return Number.isNaN(parsedSessionId) ? undefined : parsedSessionId;
-}
 
 /**
  * GET - Get current Pomodoro session state

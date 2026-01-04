@@ -1,7 +1,7 @@
 
 import { relations, sql } from "drizzle-orm";
 import type { InferSelectModel } from "drizzle-orm";
-import { boolean, index, integer, jsonb, serial, text, timestamp, varchar, bigint } from "drizzle-orm/pg-core";
+import { boolean, index, integer, serial, text, timestamp, varchar, bigint } from "drizzle-orm/pg-core";
 
 import { pgTable } from "./helpers";
 
@@ -32,10 +32,12 @@ export const studyAgentProfile = pgTable(
         sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
-        name: text("name"),
-        grade: text("grade"),
-        gender: text("gender"),
-        fieldOfStudy: text("field_of_study"),
+        aiName: text("ai_name"),
+        aiGender: text("ai_gender"),
+        aiExtroversion: integer("ai_extroversion"),
+        aiIntuition: integer("ai_intuition"),
+        aiThinking: integer("ai_thinking"),
+        aiJudging: integer("ai_judging"),
         createdAt: timestamp("created_at", { withTimezone: true })
             .default(sql`CURRENT_TIMESTAMP`)
             .notNull(),
@@ -57,7 +59,11 @@ export const studyAgentPreferences = pgTable(
         sessionId: bigint("session_id", { mode: "bigint" })
             .notNull()
             .references(() => studyAgentSessions.id, { onDelete: "cascade" }),
-        preferences: jsonb("preferences").notNull().default({}),
+        selectedDocuments: text("selected_documents").array().notNull().default([]),
+        userName: text("user_name"),
+        userGrade: text("user_grade"),
+        userGender: text("user_gender"),
+        fieldOfStudy: text("field_of_study"),
         createdAt: timestamp("created_at", { withTimezone: true })
             .default(sql`CURRENT_TIMESTAMP`)
             .notNull(),
@@ -115,6 +121,15 @@ export const studyAgentPomodoroSettings = pgTable(
             .default(4),
         autoStartBreaks: boolean("auto_start_breaks").notNull().default(false),
         autoStartPomodoros: boolean("auto_start_pomodoros").notNull().default(false),
+        phase: text("phase").notNull().default("idle"),
+        isRunning: boolean("is_running").notNull().default(false),
+        isPaused: boolean("is_paused").notNull().default(false),
+        startedAt: timestamp("started_at", { withTimezone: true }),
+        pausedAt: timestamp("paused_at", { withTimezone: true }),
+        endsAt: timestamp("ends_at", { withTimezone: true }),
+        completedPomodoros: integer("completed_pomodoros").notNull().default(0),
+        totalWorkMinutes: integer("total_work_minutes").notNull().default(0),
+        currentTaskId: text("current_task_id"),
         createdAt: timestamp("created_at", { withTimezone: true })
             .default(sql`CURRENT_TIMESTAMP`)
             .notNull(),
@@ -191,15 +206,52 @@ export const studyAgentSessionRelations = relations(studyAgentSessions, ({ many 
     messages: many(studyAgentMessages),
 }));
 
-export const studyAgentProfileRelations = relations(studyAgentProfile, ({ one, many }) => ({
+export const studyAgentProfileRelations = relations(studyAgentProfile, ({ one }) => ({
     session: one(studyAgentSessions, {
         fields: [studyAgentProfile.sessionId],
         references: [studyAgentSessions.id],
     }),
-    preferences: many(studyAgentPreferences),
-    goals: many(studyAgentGoals),
-    pomodoroSettings: many(studyAgentPomodoroSettings),
-    notes: many(studyAgentNotes),
+}));
+
+export const studyAgentPreferencesRelations = relations(
+    studyAgentPreferences,
+    ({ one }) => ({
+        session: one(studyAgentSessions, {
+            fields: [studyAgentPreferences.sessionId],
+            references: [studyAgentSessions.id],
+        }),
+    })
+);
+
+export const studyAgentGoalsRelations = relations(studyAgentGoals, ({ one }) => ({
+    session: one(studyAgentSessions, {
+        fields: [studyAgentGoals.sessionId],
+        references: [studyAgentSessions.id],
+    }),
+}));
+
+export const studyAgentPomodoroRelations = relations(
+    studyAgentPomodoroSettings,
+    ({ one }) => ({
+        session: one(studyAgentSessions, {
+            fields: [studyAgentPomodoroSettings.sessionId],
+            references: [studyAgentSessions.id],
+        }),
+    })
+);
+
+export const studyAgentNotesRelations = relations(studyAgentNotes, ({ one }) => ({
+    session: one(studyAgentSessions, {
+        fields: [studyAgentNotes.sessionId],
+        references: [studyAgentSessions.id],
+    }),
+}));
+
+export const studyAgentMessagesRelations = relations(studyAgentMessages, ({ one }) => ({
+    session: one(studyAgentSessions, {
+        fields: [studyAgentMessages.sessionId],
+        references: [studyAgentSessions.id],
+    }),
 }));
 
 export type StudyAgentSession = InferSelectModel<typeof studyAgentSessions>;

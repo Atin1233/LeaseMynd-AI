@@ -1,6 +1,7 @@
 /**
  * RAG Search Tool
- * Retrieves relevant content from uploaded documents using ensemble search
+ * Role: LangChain tool that runs BM25+vector ensemble search on user documents.
+ * Purpose: validate access, fetch relevant chunks, and format context for prompts.
  */
 
 import { tool } from "@langchain/core/tools";

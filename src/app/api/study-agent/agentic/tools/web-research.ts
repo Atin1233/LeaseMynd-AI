@@ -1,6 +1,7 @@
 /**
  * Web Research Tool
- * Performs web searches to supplement study materials
+ * Role: LangChain tool wrapper around Tavily search.
+ * Purpose: enrich answers when docs lack coverage by fetching concise web snippets.
  */
 
 import { tool } from "@langchain/core/tools";

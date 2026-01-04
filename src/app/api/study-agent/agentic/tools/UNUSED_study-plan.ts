@@ -1,13 +1,13 @@
 /**
  * Study Plan Tool
- * Creates and updates personalized study plans
+ * Role: LangChain tool to draft/update AI-generated study plans.
+ * Purpose: turn goals/topics/time into structured sessions plus recommendations.
  */
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatOpenAI } from "@langchain/openai";
-import { v4 as uuidv4 } from "uuid";
-import type { StudyPlanItem, StudyPlanInput } from "../types";
+import type { StudyPlanInput } from "../types";
 
 const StudyPlanSchema = z.object({
   goals: z.array(z.string()).describe("Learning goals or objectives"),
@@ -63,7 +63,6 @@ Do not include any text outside the JSON object.`;
 export async function createOrUpdateStudyPlan(
   input: StudyPlanInput
 ): Promise<{
-  studyPlan: StudyPlanItem[];
   recommendations: string[];
   totalEstimatedTime: number;
 }> {
@@ -75,10 +74,6 @@ export async function createOrUpdateStudyPlan(
       temperature: 0.7,
       timeout: 30000,
     });
-
-    const existingPlanContext = input.existingPlan
-      ? `\n\nExisting study plan (update/expand as needed):\n${JSON.stringify(input.existingPlan, null, 2)}`
-      : "";
 
     const response = await chat.invoke([
       { role: "system", content: STUDY_PLAN_SYSTEM_PROMPT },
@@ -93,7 +88,7 @@ Topics to cover:
 ${input.topics.map((t, i) => `${i + 1}. ${t}`).join("\n")}
 
 Available study time: ${input.availableTime} minutes total
-${existingPlanContext}`,
+`,
       },
     ]);
 
@@ -122,24 +117,11 @@ ${existingPlanContext}`,
       totalEstimatedTime: number;
     };
 
-    // Transform to our StudyPlanItem type with IDs
-    const studyPlan: StudyPlanItem[] = rawPlan.studyPlan.map((item) => ({
-      id: uuidv4(),
-      title: item.title,
-      description: item.description,
-      objectives: item.objectives,
-      estimatedDuration: item.estimatedDuration,
-      materials: item.materials,
-      completed: false,
-      priority: item.priority,
-    }));
-
     console.log(
-      `📋 [Study Plan] Created plan with ${studyPlan.length} items in ${Date.now() - startTime}ms`
+      `📋 [Study Plan] Created plan with ${rawPlan.studyPlan.length} items in ${Date.now() - startTime}ms`
     );
 
     return {
-      studyPlan,
       recommendations: rawPlan.recommendations,
       totalEstimatedTime: rawPlan.totalEstimatedTime,
     };
@@ -155,30 +137,17 @@ ${existingPlanContext}`,
 export const studyPlanTool = tool(
   async (input): Promise<string> => {
     try {
-      const existingPlan = input.existingPlan?.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        objectives: [],
-        estimatedDuration: 30,
-        materials: [],
-        completed: item.completed,
-        priority: "medium" as const,
-      }));
-
       const result = await createOrUpdateStudyPlan({
         goals: input.goals,
         availableTime: input.availableTime,
         topics: input.topics,
-        existingPlan,
       });
 
       return JSON.stringify({
         success: true,
-        studyPlan: result.studyPlan,
         recommendations: result.recommendations,
         totalEstimatedTime: result.totalEstimatedTime,
-        summary: `Created study plan with ${result.studyPlan.length} items (${result.totalEstimatedTime} min total)`,
+        summary: `Created study plan with ${result.recommendations.length} items (${result.totalEstimatedTime} min total)`,
       });
     } catch (error) {
       return JSON.stringify({
