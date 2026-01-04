@@ -1,12 +1,13 @@
 /**
- * Study Buddy Agentic Chat API
- * Provides AI chat responses using the agentic workflow
+ * Study Buddy Agentic Route
+ * Role: HTTP surface for the agentic study assistant (POST chat, GET metadata).
+ * Purpose: authenticate, validate payloads, and delegate to the orchestrator.
  */
 
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { runStudyBuddyAgent } from "./orchestrator";
-import type { StudyAgentRequest, StudyMode, StudyPlanItem } from "./types";
+import { buildAgentRequest, parseIncomingStudyAgentPayload } from "./request";
 
 export const runtime = "nodejs";
 export const maxDuration = 120; // Allow up to 2 minutes for complex workflows
@@ -22,55 +23,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = (await request.json()) as {
-      message: string;
-      mode?: StudyMode;
-      fieldOfStudy?: string;
-      selectedDocuments?: string[];
-      studyPlan?: StudyPlanItem[];
-      conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
-      preferences?: {
-        learningStyle?: "visual" | "auditory" | "kinesthetic" | "reading";
-        preferredDifficulty?: "beginner" | "intermediate" | "advanced";
-        enableWebSearch?: boolean;
-        responseLength?: "brief" | "moderate" | "detailed";
-      };
-    };
-
-    // Validate request
-    const {
-      message,
-      mode = "study-buddy",
-      fieldOfStudy,
-      selectedDocuments,
-      studyPlan,
-      conversationHistory,
-      preferences,
-    } = body;
-
-    if (!message || message.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
-      );
-    }
+    const rawBody: unknown = await request.json();
+    const parsedBody = parseIncomingStudyAgentPayload(rawBody);
 
     console.log("🤖 [Agentic Study Agent] Received request:");
-    console.log("   Message:", message.substring(0, 100));
-    console.log("   Mode:", mode);
-    console.log("   Documents:", selectedDocuments?.length ?? 0);
+    console.log("   Message:", parsedBody.message.substring(0, 100));
+    console.log("   Mode:", parsedBody.mode);
+    console.log("   Documents:", parsedBody.selectedDocuments?.length ?? 0);
 
-    // Build the request
-    const agentRequest: StudyAgentRequest = {
-      message: message.trim(),
-      mode,
-      userId,
-      fieldOfStudy,
-      selectedDocuments,
-      studyPlan,
-      conversationHistory,
-      preferences,
-    };
+    const agentRequest = buildAgentRequest(userId, parsedBody);
 
     // Run the agentic workflow
     const response = await runStudyBuddyAgent(agentRequest);
@@ -81,6 +42,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Invalid request")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error("❌ [Agentic Study Agent] Error:", error);
 
     return NextResponse.json(

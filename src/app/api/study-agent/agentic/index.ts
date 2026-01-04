@@ -47,6 +47,13 @@ export { createStudyBuddyGraph, getStudyBuddyGraph } from "./graph";
 // Orchestrator
 export { runStudyBuddyAgent, streamStudyBuddyAgent } from "./orchestrator";
 
+// HTTP helpers
+export {
+  parseIncomingStudyAgentPayload,
+  buildAgentRequest,
+  type IncomingStudyAgentPayload,
+} from "./request";
+
 // Tools
 export {
   studyBuddyTools,

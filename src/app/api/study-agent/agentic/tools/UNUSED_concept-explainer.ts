@@ -3,7 +3,7 @@
  * Provides detailed explanations of concepts with analogies and examples
  */
 
-// TODO: Concept explain output
+// TODO: Concept explain output modification
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";

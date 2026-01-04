@@ -1,13 +1,15 @@
+/**
+ * Study Agent Chat API
+ * Role: handle chat requests; route to agentic workflow when tool-like triggers appear.
+ * Purpose: provide friendly responses with optional RAG and emotion-aware TTS scripts.
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { ChatOpenAI } from "@langchain/openai";
-import {
-  SystemMessage,
-  HumanMessage,
-  AIMessage,
-} from "@langchain/core/messages";
+import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 
-import type { EmotionTag, StudyAgentChatRequest } from "./types";
+import type { EmotionTag } from "./types";
 import {
   detectEmotion,
   startsWithEmotionTag,
@@ -17,6 +19,7 @@ import {
 } from "./emotion";
 import { ensureTrailingEllipses, extractTextContent } from "./utils";
 import { getSystemPrompt } from "./prompts";
+import { parseChatRequest } from "./request";
 import {
   multiDocEnsembleSearch,
   validateDocumentAccess,
@@ -24,12 +27,6 @@ import {
 } from "~/server/rag";
 import { runStudyBuddyAgent } from "../agentic/orchestrator";
 import type { StudyMode } from "../agentic/types";
-
-/**
- * Study Agent Chat API
- * Provides AI chat responses for the study agent with context awareness
- * Now integrated with the agentic workflow for tool-based actions
- */
 
 // Keywords that trigger the agentic workflow
 const AGENTIC_TRIGGERS = [
@@ -111,15 +108,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = (await request.json()) as StudyAgentChatRequest;
-    const {
-      message,
-      mode,
-      fieldOfStudy,
-      selectedDocuments,
-      studyPlan,
-      conversationHistory,
-    } = body;
+    const parsedBody = parseChatRequest(await request.json());
+    const { message, mode, fieldOfStudy, selectedDocuments, studyPlan, conversationHistory } =
+      parsedBody;
 
     console.log("💬 [StudyAgent Chat API] Received request:");
     console.log("   Message:", message);
@@ -128,10 +119,6 @@ export async function POST(request: Request) {
     console.log("   Selected Documents:", selectedDocuments?.length ?? 0);
     console.log("   Study Plan Items:", studyPlan?.length ?? 0);
     console.log("   Conversation History:", conversationHistory?.length ?? 0, "messages");
-
-    if (!message || message.trim().length === 0) {
-      return NextResponse.json({ error: "Message is required" }, { status: 400 });
-    }
 
     if (!process.env.OPENAI_API_KEY) {
       return NextResponse.json(
@@ -292,6 +279,9 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Invalid request")) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error("Error in study agent chat:", error);
     return NextResponse.json(
       { error: "Failed to generate response" },
