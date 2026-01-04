@@ -1,6 +1,7 @@
 /**
  * Intent Detection Module
- * Detects user intent from messages to route to appropriate tools
+ * Role: infer user intent/next action from text signals to pick the right tools.
+ * Purpose: lightweight routing brain before the graph plans and executes steps.
  */
 
 // ============================================================================

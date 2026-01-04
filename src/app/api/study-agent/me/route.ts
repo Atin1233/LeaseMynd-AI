@@ -1,3 +1,9 @@
+/**
+ * Study Agent Me API
+ * Role: aggregated fetch of session, profile, preferences, goals, notes, pomodoro, messages.
+ * Purpose: return the current user's study-agent state in one call.
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { and, asc, eq } from "drizzle-orm";
@@ -12,21 +18,7 @@ import {
     studyAgentProfile,
 } from "~/server/db/schema";
 import { resolveSessionForUser } from "~/server/study-agent/session";
-
-// Helper to convert BigInt values to numbers for JSON serialization
-function serializeBigInt<T>(obj: T): T {
-    if (obj === null || obj === undefined) return obj;
-    if (typeof obj === "bigint") return Number(obj) as unknown as T;
-    if (Array.isArray(obj)) return obj.map(serializeBigInt) as unknown as T;
-    if (typeof obj === "object") {
-        const result: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(obj)) {
-            result[key] = serializeBigInt(value);
-        }
-        return result as T;
-    }
-    return obj;
-}
+import { parseSessionId, serializeBigInt } from "../shared";
 
 export async function GET(request: Request) {
     try {
@@ -35,12 +27,7 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const sessionIdParam = new URL(request.url).searchParams.get("sessionId");
-        const parsedSessionId = sessionIdParam ? Number(sessionIdParam) : undefined;
-        const session = await resolveSessionForUser(
-            userId,
-            Number.isNaN(parsedSessionId) ? undefined : parsedSessionId
-        );
+        const session = await resolveSessionForUser(userId, parseSessionId(request));
 
         if (!session) {
             // No session yet - user hasn't completed onboarding

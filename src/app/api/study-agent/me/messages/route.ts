@@ -1,32 +1,17 @@
+/**
+ * Study Agent Messages API
+ * Role: CRUD for persisted chat messages tied to a study session.
+ * Purpose: allow UI sync of message history and voice content.
+ */
+
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, asc } from "drizzle-orm";
 
 import { db } from "~/server/db";
 import { studyAgentMessages } from "~/server/db/schema";
 import { resolveSessionForUser } from "~/server/study-agent/session";
-import { asc } from "drizzle-orm";
-
-// Helper to convert BigInt values to numbers for JSON serialization
-function serializeBigInt<T>(obj: T): T {
-    if (obj === null || obj === undefined) return obj;
-    if (typeof obj === "bigint") return Number(obj) as unknown as T;
-    if (Array.isArray(obj)) return obj.map(serializeBigInt) as unknown as T;
-    if (typeof obj === "object") {
-        const result: Record<string, unknown> = {};
-        for (const [key, value] of Object.entries(obj)) {
-            result[key] = serializeBigInt(value);
-        }
-        return result as T;
-    }
-    return obj;
-}
-
-function parseSessionId(request: Request) {
-    const sessionIdParam = new URL(request.url).searchParams.get("sessionId");
-    const parsedSessionId = sessionIdParam ? Number(sessionIdParam) : undefined;
-    return Number.isNaN(parsedSessionId) ? undefined : parsedSessionId;
-}
+import { parseSessionId, serializeBigInt } from "../../shared";
 
 export async function POST(request: Request) {
     try {

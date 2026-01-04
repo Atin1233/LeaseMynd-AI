@@ -1,6 +1,7 @@
 /**
  * Graph Nodes Module
- * Node functions for the LangGraph workflow
+ * Role: LangGraph node implementations (understand → plan → agent → tools → respond).
+ * Purpose: define the stepwise agent behavior and routing logic in the compiled graph.
  */
 
 import { ChatOpenAI } from "@langchain/openai";

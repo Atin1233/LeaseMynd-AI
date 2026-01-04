@@ -1,6 +1,7 @@
 /**
  * Note-Taking Tool
- * Create and manage study notes
+ * Role: LangChain tool for creating/updating notes tied to a study session.
+ * Purpose: persist quick notes with tags so the agent can reference later.
  */
 
 import { tool } from "@langchain/core/tools";
@@ -11,6 +12,8 @@ import { studyAgentNotes } from "~/server/db/schema";
 import { resolveSessionForUser } from "~/server/study-agent/session";
 import { and, eq } from "drizzle-orm";
 
+// NOTE: "delete" stays in the schema for backward compatibility with callers,
+// but the handler intentionally rejects it (see switch below).
 const NoteSchema = z.object({
   action: z
     .enum(["create", "update", "delete"]) // TODO: add "search" or "list" actions

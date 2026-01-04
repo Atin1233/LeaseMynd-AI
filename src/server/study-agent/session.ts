@@ -27,7 +27,9 @@ export async function resolveSessionForUser(
                 )
             );
 
-        return session ?? null;
+        if (session) {
+            return session;
+        }
     }
 
     // No sessionId provided - find the user's most recent session
@@ -36,6 +38,12 @@ export async function resolveSessionForUser(
         .from(studyAgentSessions)
         .where(eq(studyAgentSessions.userId, userId))
         .orderBy(asc(studyAgentSessions.id));
+    
+    if (existing) {
+        return existing;
+    } else {
+        return null;
+    }
 
-    return existing ?? null;
+    return existing;
 }

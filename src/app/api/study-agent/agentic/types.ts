@@ -1,6 +1,7 @@
 /**
  * Study Buddy Agent Types
- * Type definitions for the agentic AI workflow
+ * Role: shared type contracts for agent state, API IO, and tool payloads.
+ * Purpose: keep all agentic shapes centralized so tools, nodes, and routes stay in sync.
  */
 
 import type { BaseMessage } from "@langchain/core/messages";

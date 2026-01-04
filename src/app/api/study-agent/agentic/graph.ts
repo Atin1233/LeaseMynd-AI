@@ -1,8 +1,8 @@
 /**
  * Study Buddy Agent Graph
- * LangGraph workflow for the agentic study assistant
+ * Role: assemble and compile the LangGraph workflow for the study agent.
+ * Purpose: wire node implementations and routing into a reusable, singleton graph.
  *
- * This module constructs and exports the compiled graph.
  * Node implementations are in ./nodes.ts
  * Intent detection is in ./intent-detection.ts
  * Prompts are in ./prompts.ts

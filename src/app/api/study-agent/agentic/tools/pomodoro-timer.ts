@@ -1,6 +1,7 @@
 /**
  * Pomodoro Timer Tool
- * Start, pause, resume, and manage Pomodoro study sessions
+ * Role: LangChain tool to control Pomodoro focus sessions per user/session.
+ * Purpose: start/pause/resume/stop/skip timers and report status with DB-backed state.
  */
 
 import { tool } from "@langchain/core/tools";

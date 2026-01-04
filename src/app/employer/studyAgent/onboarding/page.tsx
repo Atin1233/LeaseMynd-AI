@@ -120,9 +120,11 @@ export default function OnboardingPage() {
       await fetch("/api/study-agent/me/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...preferences, sessionId }),
+        body: JSON.stringify({
+          sessionId,
+          preferences,
+        }),
       });
-
       // Generate initial study plan
       const initialPlan = preferences.selectedDocuments.map((docId, index) => {
         const doc = documents.find(d => d.id === docId);

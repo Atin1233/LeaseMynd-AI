@@ -1,12 +1,12 @@
 /**
  * Study Plan Tool
- * Creates and updates personalized study plans
+ * Role: LangChain tool to draft/update AI-generated study plans.
+ * Purpose: turn goals/topics/time into structured sessions plus recommendations.
  */
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatOpenAI } from "@langchain/openai";
-import { v4 as uuidv4 } from "uuid";
 import type { StudyPlanInput } from "../types";
 
 const StudyPlanSchema = z.object({
@@ -137,17 +137,6 @@ Available study time: ${input.availableTime} minutes total
 export const studyPlanTool = tool(
   async (input): Promise<string> => {
     try {
-      const existingPlan = input.existingPlan?.map((item) => ({
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        objectives: [],
-        estimatedDuration: 30,
-        materials: [],
-        completed: item.completed,
-        priority: "medium" as const,
-      }));
-
       const result = await createOrUpdateStudyPlan({
         goals: input.goals,
         availableTime: input.availableTime,

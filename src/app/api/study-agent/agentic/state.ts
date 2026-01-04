@@ -1,6 +1,7 @@
 /**
  * Study Buddy Agent State Management
- * Defines the state schema for the LangGraph workflow
+ * Role: define the annotated state schema flowing through the LangGraph.
+ * Purpose: centralize agent memory shapes (messages, context, tools, planning).
  */
 
 import { Annotation, messagesStateReducer } from "@langchain/langgraph";

@@ -1,6 +1,7 @@
 /**
  * Prompts Module
- * System prompts and emotion detection for the study agent
+ * Role: house system prompts and simple emotion detection utilities.
+ * Purpose: keep LLM persona/context text and mood tagging centralized.
  */
 
 import type { StudyAgentState } from "./state";
