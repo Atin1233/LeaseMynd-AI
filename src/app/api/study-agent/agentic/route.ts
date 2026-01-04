@@ -6,7 +6,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { runStudyBuddyAgent } from "./orchestrator";
-import type { StudyAgentRequest, StudyMode, StudyPlanItem } from "./types";
+import type { StudyAgentRequest, StudyMode} from "./types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120; // Allow up to 2 minutes for complex workflows
@@ -27,7 +27,6 @@ export async function POST(request: Request) {
       mode?: StudyMode;
       fieldOfStudy?: string;
       selectedDocuments?: string[];
-      studyPlan?: StudyPlanItem[];
       conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>;
       preferences?: {
         learningStyle?: "visual" | "auditory" | "kinesthetic" | "reading";
@@ -43,7 +42,6 @@ export async function POST(request: Request) {
       mode = "study-buddy",
       fieldOfStudy,
       selectedDocuments,
-      studyPlan,
       conversationHistory,
       preferences,
     } = body;
@@ -67,7 +65,6 @@ export async function POST(request: Request) {
       userId,
       fieldOfStudy,
       selectedDocuments,
-      studyPlan,
       conversationHistory,
       preferences,
     };
