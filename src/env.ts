@@ -35,6 +35,7 @@ const serverSchema = z.object({
 
   // Optional services
   DATALAB_API_KEY: optionalString(), // For OCR
+  TAVILY_API_KEY: optionalString(),
 });
 
 const clientSchema = z.object({
@@ -83,6 +84,7 @@ export const env = {
     GOOGLE_AI_API_KEY: process.env.GOOGLE_AI_API_KEY,
     NODE_ENV: process.env.NODE_ENV,
     DATALAB_API_KEY: process.env.DATALAB_API_KEY,
+    TAVILY_API_KEY: process.env.TAVILY_API_KEY,
   }),
   client: parseEnv(clientSchema, {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
