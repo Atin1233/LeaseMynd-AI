@@ -1,7 +1,6 @@
-import { ChatOpenAI } from "@langchain/openai";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import { performTavilySearch, type WebSearchResult } from "./tavilySearch";
-import { env } from "~/env";
+import { createChatModel } from "~/lib/ai";
+import { performWebSearch, type WebSearchResult } from "./webSearch";
 
 /**
  * Web Search Agent using LangChain and LangSmith
@@ -89,9 +88,8 @@ async function refineSearchQuery(
     userQuestion: string,
     documentContext?: string
 ): Promise<{ refinedQuery: string; reasoning: string }> {
-    const chat = new ChatOpenAI({
-        openAIApiKey: env.server.OPENAI_API_KEY,
-        modelName: "gpt-5-mini",
+    const chat = createChatModel({
+        model: "gemini-2.0-flash",
         temperature: 0.3,
     });
 
@@ -148,10 +146,7 @@ async function executeSearch(
     try {
         console.log(`🌐 [WebSearchAgent] Executing search: "${query}"`);
         
-        const results = await performTavilySearch(
-            query,
-            maxResults * 2 // Get more results for filtering
-        );
+        const results = await performWebSearch(query, maxResults * 2);
 
         console.log(`✅ [WebSearchAgent] Found ${results.length} raw results`);
 
@@ -178,9 +173,8 @@ async function synthesizeResults(
         };
     }
 
-    const chat = new ChatOpenAI({
-        openAIApiKey: env.server.OPENAI_API_KEY,
-        modelName: "gpt-5-mini",
+    const chat = createChatModel({
+        model: "gemini-2.0-flash",
         temperature: 0.2,
     });
 
@@ -321,7 +315,7 @@ export async function executeWebSearchAgent(
     } catch (error) {
         console.error("Web search agent error:", error);
         // Fallback to direct search
-        const fallbackResults = await performTavilySearch(
+        const fallbackResults = await performWebSearch(
             input.userQuestion,
             maxResults
         );
