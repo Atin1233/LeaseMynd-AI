@@ -42,9 +42,22 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SUPABASE_ANON_KEY: requiredString(),
 });
 
+// Skip validation when explicitly requested, or on Vercel when required vars aren't yet configured
+// (allows build to succeed; add env vars in Vercel dashboard for runtime)
+const requiredVars = [
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "GOOGLE_AI_API_KEY",
+] as const;
+const hasRequiredVars = requiredVars.every((k) => {
+  const v = process.env[k];
+  return typeof v === "string" && v.trim().length > 0;
+});
 const skipValidation =
   process.env.SKIP_ENV_VALIDATION === "true" ||
-  process.env.SKIP_ENV_VALIDATION === "1";
+  process.env.SKIP_ENV_VALIDATION === "1" ||
+  (process.env.VERCEL === "1" && !hasRequiredVars);
 
 const parseEnv = <T extends z.AnyZodObject>(
   schema: T,
