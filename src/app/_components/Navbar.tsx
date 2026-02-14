@@ -5,8 +5,6 @@ import React from 'react';
 import { Brain } from 'lucide-react';
 import styles from '../../styles/navbar.module.css';
 import { ThemeToggle } from './ThemeToggle';
-import { SignUpButton } from '@clerk/nextjs';
-
 export function Navbar() {
     return (
         <nav className={styles.navContainer}>
@@ -38,11 +36,11 @@ export function Navbar() {
                             </button>
                         </Link>
                         <ThemeToggle />
-                        <SignUpButton>
+                        <Link href="/signup">
                             <button className={`${styles.btn} ${styles.btnPrimary}`}>
                                 Get Started
                             </button>
-                        </SignUpButton>
+                        </Link>
                     </div>
                 </div>
             </div>
