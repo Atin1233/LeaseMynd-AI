@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { createChatModel, createGoogleEmbeddings } from "~/lib/ai";
 import { db } from "~/server/db/index";
 import { eq, sql } from "drizzle-orm";
 import ANNOptimizer from "../predictive-document-analysis/services/annOptimizer";
@@ -18,7 +15,7 @@ import { validateRequestBody, QuestionSchema } from "~/lib/validation";
 import { auth } from "@clerk/nextjs/server";
 import { qaRequestCounter, qaRequestDuration } from "~/server/metrics/registry";
 import { users, document } from "~/server/db/schema";
-import { performTavilySearch, type WebSearchResult } from "./services/tavilySearch";
+import { performWebSearch, type WebSearchResult } from "./services/webSearch";
 import { executeWebSearchAgent } from "./services/webSearchAgent";
 import normalizeModelContent from "./normalizeModelContent";
 import { withRateLimit } from "~/lib/rate-limit-middleware";
@@ -114,36 +111,9 @@ const qaAnnOptimizer = new ANNOptimizer({
 
 const COMPANY_SCOPE_ROLES = new Set(["employer", "owner"]);
 
-type AIModelType = "gpt4" | "claude" | "gemini";
-
-function getChatModel(modelType: AIModelType): BaseChatModel {
-    switch (modelType) {
-        case "claude":
-            return new ChatAnthropic({
-                anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-                modelName: "claude-sonnet-4-20250514",
-                temperature: 0.7,
-            });
-        case "gemini":
-            return new ChatGoogleGenerativeAI({
-                apiKey: process.env.GOOGLE_AI_API_KEY,
-                model: "gemini-2.0-flash",
-                temperature: 0.7,
-            });
-        case "gpt4":
-        default:
-            return new ChatOpenAI({
-                openAIApiKey: process.env.OPENAI_API_KEY,
-                modelName: "gpt-4o",
-                temperature: 0.7,
-                timeout: 600000,
-            });
-    }
-}
-
 export async function POST(request: Request) {
     // Apply rate limiting: 20 requests per 15 minutes for AI chat
-    // This is an expensive operation that calls OpenAI APIs
+    // This is an expensive operation that calls Google AI APIs
     return withRateLimit(request, RateLimitPresets.strict, async () => {
         const startTime = Date.now();
         const endTimer = qaRequestDuration.startTimer();
@@ -178,7 +148,6 @@ export async function POST(request: Request) {
             searchScope,
             enableWebSearch,
             aiPersona,
-            aiModel,
         } = validation.data;
 
         console.log("searchScope", searchScope);
@@ -263,10 +232,7 @@ export async function POST(request: Request) {
             }
         }
 
-        const embeddings = new OpenAIEmbeddings({
-            model: "text-embedding-ada-002",
-            openAIApiKey: process.env.OPENAI_API_KEY,
-        });
+        const embeddings = createGoogleEmbeddings();
 
         let documents: SearchResult[] = [];
         retrievalMethod = searchScope === "company" ? 'company_ensemble_rrf' : 'document_ensemble_rrf';
@@ -349,10 +315,10 @@ export async function POST(request: Request) {
                         id,
                         content,
                         page,
-                        embedding <-> ${bracketedEmbedding}::vector(1536) AS distance
+                        embedding <-> ${bracketedEmbedding}::vector(768) AS distance
                       FROM pdr_ai_v2_pdf_chunks
                       WHERE document_id = ${documentId}
-                      ORDER BY embedding <-> ${bracketedEmbedding}::vector(1536)
+                      ORDER BY embedding <-> ${bracketedEmbedding}::vector(768)
                       LIMIT 3
                     `;
 
@@ -402,9 +368,11 @@ export async function POST(request: Request) {
             
         console.log(`✅ [AI] Built context with pages: ${documents.map(doc => doc.metadata?.page).join(', ')}`);
 
-        const selectedAiModel = aiModel ?? 'gpt4';
-        const chat = getChatModel(selectedAiModel);
-        console.log(`🤖 Using AI model: ${selectedAiModel}`);
+        const chat = createChatModel({
+            temperature: 0.7,
+            timeout: 600_000,
+        });
+        console.log(`🤖 Using AI model: Google AI (Gemini)`);
 
         const selectedStyle = style ?? 'concise';
         const enableWebSearchFlag = enableWebSearch ?? false;
@@ -469,8 +437,8 @@ export async function POST(request: Request) {
                 console.error("❌ Web search agent error:", webSearchError);
                 // Fallback to direct Tavily search
                 try {
-                    console.log('🔄 Falling back to direct Tavily search...');
-                    webSearchResults = await performTavilySearch(question, 5);
+                    console.log('🔄 Falling back to direct web search...');
+                    webSearchResults = await performWebSearch(question, 5);
                     refinedSearchQuery = question;
                     if (webSearchResults.length > 0) {
                         webSearchContent = `\n\n=== Web Search Results ===\n${webSearchResults.map((result, idx) => 
@@ -599,7 +567,7 @@ The user enabled web search, but no relevant results were found for this query. 
             chunksAnalyzed: documents.length,
             fusionWeights: [0.4, 0.6],
             searchScope,
-            aiModel: selectedAiModel,
+            aiModel: "gemini",
             webSources: enableWebSearchFlag ? webSearchResults : undefined,
             webSearch: enableWebSearchFlag ? {
                 refinedQuery: refinedSearchQuery || question,
