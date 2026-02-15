@@ -292,7 +292,7 @@ export async function POST(request: Request) {
                 status = HTTP_STATUS.BAD_GATEWAY;
                 message = "External service error. Analysis completed with limited functionality.";
                 errorType = ERROR_TYPES.EXTERNAL_SERVICE;
-            } else if (error.message.includes('openai') || error.message.includes('api')) {
+            } else if (error.message.includes('api') || error.message.includes('GOOGLE_AI')) {
                 status = HTTP_STATUS.BAD_GATEWAY;
                 message = "AI service temporarily unavailable. Please try again later.";
                 errorType = ERROR_TYPES.AI_SERVICE;

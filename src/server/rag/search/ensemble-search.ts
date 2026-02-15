@@ -4,7 +4,7 @@
  */
 
 import { EnsembleRetriever } from "langchain/retrievers/ensemble";
-import { OpenAIEmbeddings } from "@langchain/openai";
+import { createGoogleEmbeddings } from "~/lib/ai";
 import { BM25Retriever } from "@langchain/community/retrievers/bm25";
 import {
   createDocumentVectorRetriever,
@@ -37,13 +37,10 @@ const DEFAULT_WEIGHTS: [number, number] = [0.4, 0.6];
 const DEFAULT_TOP_K = 8;
 
 /**
- * Create embeddings provider with OpenAI
+ * Create embeddings provider (Google AI Studio only)
  */
-export function createOpenAIEmbeddings(): OpenAIEmbeddings {
-  return new OpenAIEmbeddings({
-    openAIApiKey: process.env.OPENAI_API_KEY,
-    modelName: "text-embedding-3-small",
-  });
+export function createGoogleEmbeddingsForRag() {
+  return createGoogleEmbeddings();
 }
 
 /**
@@ -54,7 +51,7 @@ export async function createDocumentEnsembleRetriever(
   embeddings?: EmbeddingsProvider
 ): Promise<EnsembleRetriever> {
   const { documentId, weights = DEFAULT_WEIGHTS, topK = DEFAULT_TOP_K } = options;
-  const emb = embeddings ?? createOpenAIEmbeddings();
+  const emb = embeddings ?? createGoogleEmbeddingsForRag();
 
   const bm25Retriever = await createDocumentBM25Retriever(documentId, topK);
   const vectorRetriever = createDocumentVectorRetriever(documentId, emb, topK);
@@ -73,7 +70,7 @@ export async function createCompanyEnsembleRetriever(
   embeddings?: EmbeddingsProvider
 ): Promise<EnsembleRetriever> {
   const { companyId, weights = DEFAULT_WEIGHTS, topK = 10 } = options;
-  const emb = embeddings ?? createOpenAIEmbeddings();
+  const emb = embeddings ?? createGoogleEmbeddingsForRag();
 
   const bm25Retriever = await createCompanyBM25Retriever(companyId, topK);
   const vectorRetriever = createCompanyVectorRetriever(companyId, emb, topK);
@@ -92,7 +89,7 @@ export async function createMultiDocEnsembleRetriever(
   embeddings?: EmbeddingsProvider
 ): Promise<EnsembleRetriever> {
   const { documentIds, weights = DEFAULT_WEIGHTS, topK = DEFAULT_TOP_K } = options;
-  const emb = embeddings ?? createOpenAIEmbeddings();
+  const emb = embeddings ?? createGoogleEmbeddingsForRag();
 
   const bm25Retriever = await createMultiDocBM25Retriever(documentIds, topK);
   const vectorRetriever = createMultiDocVectorRetriever(documentIds, emb, topK);

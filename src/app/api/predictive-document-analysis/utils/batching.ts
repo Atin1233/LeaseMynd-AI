@@ -6,7 +6,7 @@ export type ChunkBatchingOptions = {
 };
 
 /**
- * Groups sequential chunks to keep OpenAI round trips bounded.
+ * Groups sequential chunks to keep AI round trips bounded.
  */
 export function createChunkBatches(
     chunks: PdfChunk[],

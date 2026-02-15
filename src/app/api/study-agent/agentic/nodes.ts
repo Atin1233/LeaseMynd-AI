@@ -4,8 +4,8 @@
  * Purpose: define the stepwise agent behavior and routing logic in the compiled graph.
  */
 
-import { ChatOpenAI } from "@langchain/openai";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { createChatModel } from "~/lib/ai";
 import {
   SystemMessage,
   HumanMessage,
@@ -246,10 +246,11 @@ export async function agentNode(
   console.log(`   Planned tools: ${state.toolsUsed.join(", ") || "none"}`);
   console.log(`   User intent: ${state.userIntent}`);
 
-  const model = new ChatOpenAI({
-    modelName: "gpt-5.2",
+  // @ts-expect-error - strict optional chaining / bindTools inference
+  const model = createChatModel({
+    model: "gemini-2.0-flash",
     temperature: 0.7,
-    timeout: 60000,
+    timeout: 60_000,
   }).bindTools(studyBuddyTools);
 
   const systemPrompt = getSystemPrompt(state.mode, state);

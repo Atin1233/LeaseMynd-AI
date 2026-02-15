@@ -245,7 +245,7 @@ export class ANNOptimizer {
             };
         }
 
-        const dimension = chunks[0]?.embedding?.length ?? 1536;
+        const dimension = chunks[0]?.embedding?.length ?? 768;
         const centroid = new Array(dimension).fill(0);
         
         for (const chunk of chunks) {

@@ -1,5 +1,5 @@
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { createChatModel } from "~/lib/ai";
 import { z } from "zod";
 import { DuckDuckGoSearch } from "@langchain/community/tools/duckduckgo_search";
 import type { 
@@ -147,10 +147,10 @@ export async function callAIAnalysis(
     const content = groupContentFromChunks(chunks);
     const prompt = createAnalysisPrompt(content, specification);
 
-    const chat = new ChatOpenAI({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        modelName: "gpt-5.2",
+    const chat = createChatModel({
+        model: "gemini-2.0-flash",
         temperature: 0.3,
+        timeout: timeoutMs,
     });
 
     const structuredModel = chat.withStructuredOutput(AnalysisResultSchema, {
@@ -205,7 +205,7 @@ export async function analyzeDocumentChunks(
     allChunks: PdfChunk[],
     specification: AnalysisSpecification,
     timeoutMs = 30000,
-    maxConcurrency = ANALYSIS_BATCH_CONFIG.MAX_CONCURRENCY
+    maxConcurrency: number = ANALYSIS_BATCH_CONFIG.MAX_CONCURRENCY
 ): Promise<AnalyzeDocumentChunksResponse> {
     const batches = createChunkBatches(allChunks, {
         maxChunksPerCall: ANALYSIS_BATCH_CONFIG.MAX_CHUNKS_PER_CALL,

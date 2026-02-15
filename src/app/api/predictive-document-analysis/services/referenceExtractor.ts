@@ -1,7 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
+import { createChatModel } from "~/lib/ai";
 import { z } from "zod";
-import type { PdfChunk, DocumentReference } from "../types";
+import type { DocumentReference, PdfChunk } from "../types";
 import { groupContentFromChunks, hasSpecificIdentifier } from "../utils/content";
 
 const ReferenceExtractionSchema = z.object({
@@ -43,10 +43,10 @@ export async function extractReferences(
     const content = groupContentFromChunks(chunks);
     const prompt = createReferenceExtractionPrompt(content);
     
-    const chat = new ChatOpenAI({
-        openAIApiKey: process.env.OPENAI_API_KEY,
-        modelName: "gpt-5.2",
+    const chat = createChatModel({
+        model: "gemini-2.0-flash",
         temperature: 0.1,
+        timeout: timeoutMs,
     });
 
     const structuredModel = chat.withStructuredOutput(ReferenceExtractionSchema, {
@@ -68,8 +68,8 @@ export async function extractReferences(
         const response = await Promise.race([aiCallPromise, timeoutPromise]);
         const references = response.references;
         
-        const filteredReferences = references.filter(ref => 
-            hasSpecificIdentifier(ref.documentName)
+        const filteredReferences = (references as DocumentReference[]).filter(
+            (ref: DocumentReference) => hasSpecificIdentifier(ref.documentName)
         );
         
         return filteredReferences;
