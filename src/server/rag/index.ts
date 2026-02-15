@@ -52,7 +52,7 @@ export {
 
 // Search
 export {
-  createOpenAIEmbeddings,
+  createGoogleEmbeddingsForRag,
   createDocumentEnsembleRetriever,
   createCompanyEnsembleRetriever,
   createMultiDocEnsembleRetriever,
