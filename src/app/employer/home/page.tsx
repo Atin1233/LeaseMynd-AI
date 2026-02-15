@@ -1,174 +1,154 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Upload, FileText, BarChart, Brain, Settings, Users, HelpCircle, GraduationCap } from "lucide-react";
+
+import React from "react";
+import {
+  Upload,
+  FileText,
+  BarChart,
+  Brain,
+  Settings,
+  Users,
+  HelpCircle,
+  GraduationCap,
+} from "lucide-react";
 import styles from "~/styles/Employer/Home.module.css";
 import { useRouter } from "next/navigation";
 import ProfileDropdown from "~/app/employer/_components/ProfileDropdown";
-import { useAuth } from "@clerk/nextjs";
-import LoadingPage from "~/app/_components/loading";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 import { ThemeToggle } from "~/app/_components/ThemeToggle";
 
+const menuOptions = [
+  {
+    icon: <Upload className={styles.menuIcon} />,
+    title: "Upload Documents",
+    description: "Add new documents to the database for AI analysis",
+    path: "/employer/upload",
+    isBeta: false,
+  },
+  {
+    icon: <FileText className={styles.menuIcon} />,
+    title: "View Documents",
+    description: "Browse and manage your uploaded documents",
+    path: "/employer/documents",
+    isBeta: false,
+  },
+  {
+    icon: <BarChart className={styles.menuIcon} />,
+    title: "Document Statistics",
+    description: "View analytics and insights about document usage",
+    path: "/unavailable",
+    isBeta: false,
+  },
+  {
+    icon: <GraduationCap className={styles.menuIcon} />,
+    title: "Study Agent",
+    description:
+      "AI-powered study companion with teacher and study buddy modes",
+    path: "/employer/studyAgent",
+    isBeta: true,
+  },
+  {
+    icon: <Users className={styles.menuIcon} />,
+    title: "Manage Employees",
+    description: "View and manage employees in your organization",
+    path: "/employer/employees",
+    isBeta: false,
+  },
+  {
+    icon: <Settings className={styles.menuIcon} />,
+    title: "User Settings",
+    description: "Manage your profile, preferences, and account details",
+    path: "/employer/settings",
+    isBeta: false,
+  },
+  {
+    icon: <HelpCircle className={styles.menuIcon} />,
+    title: "Contact Support",
+    description: "Get help with technical difficulties and questions",
+    path: "/employer/contact",
+    isBeta: false,
+  },
+];
+
 const HomeScreen = () => {
-    const router = useRouter();
+  const router = useRouter();
+  const { user, loading } = useEmployerAuth();
 
-    // check if authorized. If not authorized as employer, return home
-    const { isLoaded, userId } = useAuth();
-    const [loading, setLoading] = useState(true);
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
 
-    useEffect(() => {
-        if (!isLoaded) return;
-        // If there is no user at all, send them home
-        if (!userId) {
-            window.alert("Authentication failed! No user found.");
-            router.push("/");
-            return;
-        }
-
-        // Check if the user’s role is employer
-        const checkEmployerRole = async () => {
-            try {
-                const response = await fetch("/api/employerAuth", {
-                    method: "GET",
-                });
-                if(response.status === 300){
-                    router.push("/employee/pending-approval");
-                    return;
-                }
-                else if (!response.ok) {
-                    // If the endpoint returns an error, also redirect
-                    window.alert("Authentication failed! You are not an employer.");
-                    router.push("/");
-                    return;
-                }
-            } catch (error) {
-                console.error("Error checking employer role:", error);
-                // If there is any error, also redirect or handle appropriately
-                window.alert("Authentication failed! You are not an employer.");
-                router.push("/");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkEmployerRole().catch(console.error);
-    }, [userId, router, isLoaded]);
-
-    // Updated menu options with Manage Employees
-    const menuOptions = [
-        {
-            icon: <Upload className={styles.menuIcon} />,
-            title: "Upload Documents",
-            description: "Add new documents to the database for AI analysis",
-            path: "/employer/upload",
-            isBeta: false,
-        },
-        {
-            icon: <FileText className={styles.menuIcon} />,
-            title: "View Documents",
-            description: "Browse and manage your uploaded documents",
-            path: "/employer/documents",
-            isBeta: false,
-        },
-        {
-            icon: <BarChart className={styles.menuIcon} />,
-            title: "Document Statistics",
-            description: "View analytics and insights about document usage",
-            path: "/unavailable",
-            isBeta: false,
-        },
-        {
-            icon: <GraduationCap className={styles.menuIcon} />,
-            title: "Study Agent",
-            description: "AI-powered study companion with teacher and study buddy modes",
-            path: "/employer/studyAgent",
-            isBeta: true,
-        },
-        {
-            icon: <Users className={styles.menuIcon} />,
-            title: "Manage Employees",
-            description: "View and manage employees in your organization",
-            path: "/employer/employees",
-            isBeta: false,
-        },
-        {
-            icon: <Settings className={styles.menuIcon} />,
-            title: "User Settings",
-            description: "Manage your profile, preferences, and account details",
-            path: "/employer/settings",
-            isBeta: false,
-        },
-        {
-            icon: <HelpCircle className={styles.menuIcon} />,
-            title: "Contact Support",
-            description: "Get help with technical difficulties and questions",
-            path: "/employer/contact",
-            isBeta: false,
-        },
-    ];
-
-    const handleNavigation = (path: string) => {
-        router.push(path);
-    };
-
-    if (loading) {
-        return <LoadingPage />;
-    }
-
+  if (loading || !user) {
     return (
-        <div className={styles.container}>
-            <nav className={styles.navbar}>
-                <div className={styles.navContent}>
-                    <div className={styles.logoContainer}>
-                        <Brain className={styles.logoIcon} />
-                        <span className={styles.logoText}>PDR AI</span>
-                    </div>
-                    <div className={styles.navActions}>
-                        <ThemeToggle />
-                        <ProfileDropdown />
-                    </div>
-                </div>
-            </nav>
-            <main className={styles.main}>
-                <div className={styles.welcomeSection}>
-                    <h1 className={styles.welcomeTitle}>Welcome to PDR AI</h1>
-                    <p className={styles.welcomeText}>
-                        Your AI integrated document management assistant and interpreter. Choose an option below
-                        to get started.
-                    </p>
-                </div>
-
-                <div className={styles.menuGrid}>
-                    {menuOptions.map((option, index) => (
-                        <div
-                            key={index}
-                            className={styles.menuCard}
-                            onClick={() => handleNavigation(option.path)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    handleNavigation(option.path);
-                                }
-                            }}
-                            role="button"
-                            tabIndex={0}
-                        >
-                            <div className={styles.cardHeader}>
-                                <div className={styles.iconContainer}>{option.icon}</div>
-                                {option.isBeta && (
-                                    <span className={styles.betaBadge}>Beta</span>
-                                )}
-                            </div>
-                            <h2 className={styles.menuTitle}>{option.title}</h2>
-                            <p className={styles.menuDescription}>{option.description}</p>
-                            <div className={styles.cardFooter}>
-                                <span className={styles.getStarted}>Get Started</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </main>
-        </div>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--stone-50, #fafaf9)",
+        }}
+      >
+        <p>Loading...</p>
+      </div>
     );
+  }
+
+  return (
+    <div className={styles.container}>
+      <nav className={styles.navbar}>
+        <div className={styles.navContent}>
+          <div className={styles.logoContainer}>
+            <Brain className={styles.logoIcon} />
+            <span className={styles.logoText}>PDR AI</span>
+          </div>
+          <div className={styles.navActions}>
+            <ThemeToggle />
+            <ProfileDropdown />
+          </div>
+        </div>
+      </nav>
+      <main className={styles.main}>
+        <div className={styles.welcomeSection}>
+          <h1 className={styles.welcomeTitle}>Welcome to PDR AI</h1>
+          <p className={styles.welcomeText}>
+            Your AI integrated document management assistant and interpreter.
+            Choose an option below to get started.
+          </p>
+        </div>
+
+        <div className={styles.menuGrid}>
+          {menuOptions.map((option, index) => (
+            <div
+              key={index}
+              className={styles.menuCard}
+              onClick={() => handleNavigation(option.path)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleNavigation(option.path);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
+              <div className={styles.cardHeader}>
+                <div className={styles.iconContainer}>{option.icon}</div>
+                {option.isBeta && (
+                  <span className={styles.betaBadge}>Beta</span>
+                )}
+              </div>
+              <h2 className={styles.menuTitle}>{option.title}</h2>
+              <p className={styles.menuDescription}>{option.description}</p>
+              <div className={styles.cardFooter}>
+                <span className={styles.getStarted}>Get Started</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
 };
 
 export default HomeScreen;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, type PropsWithChildren } from "react";
-import { useAuth } from "@clerk/nextjs";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 import { useRouter } from "next/navigation";
 import LoadingPage from "~/app/_components/loading";
 
@@ -13,45 +13,24 @@ const EmployerAuthCheck: React.FC<PropsWithChildren<EmployerAuthCheckProps>> = (
                                                                                     onAuthSuccess,
                                                                                     children,
                                                                                 }) => {
-    const { isLoaded, userId } = useAuth();
+    const { user, loading: authLoading } = useEmployerAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!isLoaded) return;
+        if (authLoading) return;
 
-        if (!userId) {
+        if (!user) {
             alert("Authentication failed! No user found.");
             router.push("/");
             return;
         }
 
-        const checkEmployerRole = async () => {
-            try {
-                const response = await fetch("/api/employerAuth", {
-                    method: "GET",
-                });
-                if (!response.ok) {
-                    alert("Authentication failed! You are not an employer.");
-                    router.push("/");
-                    return;
-                }
+        onAuthSuccess(user.userId);
+        setLoading(false);
+    }, [authLoading, user, router, onAuthSuccess]);
 
-                // If everything is okay, fetch categories or do any post-auth success logic.
-                onAuthSuccess(userId);
-            } catch (error) {
-                console.error("Error checking employer role:", error);
-                alert("Authentication failed! You are not an employer.");
-                router.push("/");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkEmployerRole().catch(console.error);
-    }, [isLoaded, userId, router, onAuthSuccess]);
-
-    if (loading) {
+    if (loading || authLoading) {
         return <LoadingPage />;
     }
 

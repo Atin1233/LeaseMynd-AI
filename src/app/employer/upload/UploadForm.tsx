@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Calendar, FileText, FolderPlus, Plus } from "lucide-react";
 import { UploadDropzone } from "~/app/utils/uploadthing";
-import { useAuth } from "@clerk/nextjs";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 import { useRouter } from "next/navigation";
 import styles from "~/styles/Employer/Upload.module.css";
 
@@ -21,8 +21,9 @@ interface UploadFormProps {
 }
 
 const UploadForm: React.FC<UploadFormProps> = ({ categories }) => {
-    const { userId } = useAuth();
+    const { user } = useEmployerAuth();
     const router = useRouter();
+    const userId = user?.userId;
 
     // --- Form State ---
     const [formData, setFormData] = useState<UploadFormData>({
@@ -79,7 +80,7 @@ const UploadForm: React.FC<UploadFormProps> = ({ categories }) => {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    userId,
+                    userId: userId ?? "",
                     documentName: formData.title,
                     documentCategory: formData.category,
                     documentUrl: formData.fileUrl,

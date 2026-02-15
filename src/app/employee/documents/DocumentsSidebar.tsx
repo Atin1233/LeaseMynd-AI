@@ -15,7 +15,7 @@ import {
   BarChart3,
   ChevronLeft,
 } from "lucide-react";
-import { SignOutButton, UserButton } from "@clerk/nextjs";
+import { useEmployeeAuth } from "~/lib/auth/EmployeeAuthContext";
 import styles from "~/styles/Employee/DocumentViewer.module.css";
 import { type ViewMode } from "./types";
 import { ThemeToggle } from "~/app/_components/ThemeToggle";
@@ -84,6 +84,7 @@ export const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
   setViewMode,
   toggleCategory,
 }) => {
+  const { user } = useEmployeeAuth();
   const [hoveredTooltip, setHoveredTooltip] = useState<string | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -224,31 +225,17 @@ export const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
       {/* Profile Section */}
       <div className={styles.profileSection}>
         <ThemeToggle />
-        <UserButton
-          afterSignOutUrl="/sign-in"
-          appearance={{
-            variables: {
-              colorPrimary: "#8B5CF6",
-              colorText: "#4F46E5",
-              borderRadius: "0.5rem",
-              fontFamily: "Inter, sans-serif",
-            },
-            elements: {
-              userButtonAvatarBox: "border-2 border-purple-300",
-              userButtonTrigger:
-                "hover:bg-purple-50 transition-colors p-1 flex items-center rounded-lg",
-              userButtonPopoverCard: "shadow-md border border-gray-100",
-              userButtonPopoverFooter:
-                "bg-gray-50 border-t border-gray-100 p-2",
-            },
-          }}
-        />
-        <SignOutButton>
-          <button className={styles.logoutButton}>
+        {user && (
+          <span className={styles.userName} style={{ fontSize: "0.875rem", color: "#6b7280", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "120px" }}>
+            {user.name || user.email}
+          </span>
+        )}
+        <form action="/auth/signout" method="POST">
+          <button type="submit" className={styles.logoutButton}>
             <LogOut className={styles.logoutIcon} />
             <span>Logout</span>
           </button>
-        </SignOutButton>
+        </form>
       </div>
     </aside>
   );

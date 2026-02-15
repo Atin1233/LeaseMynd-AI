@@ -193,7 +193,7 @@ export function handleApiError(error: unknown): NextResponse<ErrorResponse> {
       );
     }
 
-    if (error.message.includes('openai') || error.message.includes('api')) {
+    if (error.message.includes('GOOGLE_AI') || error.message.includes('api')) {
       return createExternalServiceError(
         "AI service temporarily unavailable. Please try again later.",
         error

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useEmployeeAuth } from "~/lib/auth/EmployeeAuthContext";
 
 import styles from "../../../styles/Employee/DocumentViewer.module.css";
 
@@ -120,7 +120,8 @@ interface PredictiveAnalysisResponse {
 
 const DocumentViewer: React.FC = () => {
     const router = useRouter();
-    const { isLoaded, userId } = useAuth();
+    const { user, loading: authLoading } = useEmployeeAuth();
+    const userId = user?.userId;
     const [documents, setDocuments] = useState<DocumentType[]>([]);
     const [selectedDoc, setSelectedDoc] = useState<DocumentType | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -146,7 +147,7 @@ const DocumentViewer: React.FC = () => {
             const response = await fetch("/api/Questions/add", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, documentId: Entry.documentId, documentTitle: Entry.documentTitle, question: Entry.question, response: Entry.response, pages: Entry.pages }),
+                body: JSON.stringify({ userId: userId ?? "", documentId: Entry.documentId, documentTitle: Entry.documentTitle, question: Entry.question, response: Entry.response, pages: Entry.pages }),
             });
 
             if (!response.ok) {
@@ -179,39 +180,9 @@ const DocumentViewer: React.FC = () => {
     };
 
     useEffect(() => {
-        if (!isLoaded) return;
-
-        if (!userId) {
-            window.alert("Authentication failed! No user found.");
-            router.push("/");
-            return;
-        }
-
-        const checkEmployeeRole = async () => {
-            try {
-                const response = await fetch("/api/employeeAuth", {
-                    method: "GET",
-                });
-
-                if (response.status === 300) {
-                    router.push("/employee/pending-approval");
-                    return;
-                } else if (!response.ok) {
-                    window.alert("Authentication failed! You are not an employee.");
-                    router.push("/");
-                    return;
-                }
-            } catch (error) {
-                console.error("Error checking employee role:", error);
-                window.alert("Authentication failed! You are not an employee.");
-                router.push("/");
-            } finally {
-                setRoleLoading(false);
-            }
-        };
-
-        checkEmployeeRole().catch(console.error);
-    }, [isLoaded, userId, router]);
+        if (authLoading || !user) return;
+        setRoleLoading(false);
+    }, [authLoading, user]);
 
     useEffect(() => {
         if (!userId) return;
@@ -221,7 +192,7 @@ const DocumentViewer: React.FC = () => {
                 const response = await fetch("/api/fetchDocument", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId }),
+                    body: JSON.stringify({ userId: userId ?? "" }),
                 });
 
                 if (!response.ok) {

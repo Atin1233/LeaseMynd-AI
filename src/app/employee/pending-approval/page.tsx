@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Clock, Building, Mail } from 'lucide-react';
 import { useRouter } from "next/navigation"
-import { useAuth } from "@clerk/nextjs";
+import { useEmployeeAuth } from "~/lib/auth/EmployeeAuthContext";
 import styles from '~/styles/Employee/PendingApproval.module.css';
 import NavBar from "~/app/employer/employees/NavBar";
 
@@ -16,16 +16,15 @@ interface EmployeeData {
 
 const PendingApproval: React.FC = () => {
     const router = useRouter();
-    const { userId } = useAuth();
+    const { user, loading: authLoading } = useEmployeeAuth();
 
     const [currentEmployeeData, setCurrentEmployeeData] = useState<EmployeeData>();
 
-    const checkEmployerRole = useCallback(async () => {
+    const fetchUserInfo = useCallback(async () => {
         try {
             const response = await fetch("/api/fetchUserInfo", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId }),
             });
 
             const rawData: unknown = await response.json();
@@ -38,17 +37,33 @@ const PendingApproval: React.FC = () => {
                 submissionDate: data?.submissionDate,
             });
         } catch (error) {
-            console.error("Error checking employee role:", error);
+            console.error("Error fetching user info:", error);
             window.alert("Authentication failed! You are not an employee.");
             router.push("/");
         }
-    }, [userId, router]);
+    }, [router]);
 
     useEffect(() => {
-        if (userId) {
-            checkEmployerRole().catch(console.error);
+        if (user) {
+            fetchUserInfo().catch(console.error);
         }
-    }, [userId, checkEmployerRole]);
+    }, [user, fetchUserInfo]);
+
+    if (authLoading || !user) {
+        return (
+            <div
+                style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "var(--stone-50, #fafaf9)",
+                }}
+            >
+                <p>Loading...</p>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>

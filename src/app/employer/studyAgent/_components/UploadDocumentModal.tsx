@@ -15,7 +15,7 @@ import {
 } from "./ui/select";
 import { cn } from "./ui/utils";
 import { UploadDropzone } from "~/app/utils/uploadthing";
-import { useAuth } from "@clerk/nextjs";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 
 interface UploadDocumentModalProps {
   isOpen: boolean;
@@ -41,7 +41,8 @@ export function UploadDocumentModal({
   onUploadComplete,
   isDark = false 
 }: UploadDocumentModalProps) {
-  const { userId } = useAuth();
+  const { user } = useEmployerAuth();
+  const userId = user?.userId;
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [category, setCategory] = useState("");

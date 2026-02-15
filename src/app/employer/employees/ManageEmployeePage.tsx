@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 
 import NavBar from "./NavBar";
 import EmployeeTable from "./CurrentEmployeeTable";
@@ -14,7 +14,7 @@ import LoadingPage from "~/app/_components/loading";
 import styles from "~/styles/Employer/EmployeeManagement.module.css";
 
 const ManageEmployeesPage: React.FC = () => {
-    const { isLoaded, userId } = useAuth();
+    const { user, loading: authLoading } = useEmployerAuth();
     const router = useRouter();
     const [userRole, setUserRole] = useState("employer" as "owner" | "employer");
     const [loading, setLoading] = useState(true);
@@ -47,14 +47,13 @@ const ManageEmployeesPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (!isLoaded || !userId) return;
+        if (authLoading || !user) return;
 
         const checkRole = async () => {
             try {
                 const response = await fetch("/api/fetchUserInfo", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId }),
                 });
 
                 if (!response.ok) {
@@ -84,7 +83,7 @@ const ManageEmployeesPage: React.FC = () => {
         };
 
         checkRole().catch(console.error);
-    }, [isLoaded, userId, router, loadEmployees]);
+    }, [authLoading, user, router, loadEmployees]);
 
     const handleRemoveEmployee = async (employeeId: string) => {
         try {
@@ -114,7 +113,7 @@ const ManageEmployeesPage: React.FC = () => {
         }
     };
 
-    if (loading) {
+    if (authLoading || !user || loading) {
         return <LoadingPage />;
     }
 

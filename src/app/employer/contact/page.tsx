@@ -1,17 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useAuth } from "@clerk/nextjs";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Brain, Home, Mail, MessageSquare, Phone, Send } from "lucide-react";
 import { ThemeToggle } from "~/app/_components/ThemeToggle";
-import LoadingPage from "~/app/_components/loading";
 import styles from "~/styles/Employer/Contact.module.css";
 
 const EmployerContactPage = () => {
     const router = useRouter();
-    const { isLoaded, userId } = useAuth();
-    const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -20,40 +16,6 @@ const EmployerContactPage = () => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
-
-    useEffect(() => {
-        if (!isLoaded) return;
-
-        if (!userId) {
-            window.alert("Authentication failed! Please sign in.");
-            router.push("/");
-            return;
-        }
-
-        const checkEmployerRole = async () => {
-            try {
-                const response = await fetch("/api/employerAuth", {
-                    method: "GET",
-                });
-
-                if (response.status === 300) {
-                    router.push("/employee/pending-approval");
-                    return;
-                } else if (!response.ok) {
-                    window.alert("Authentication failed! You are not an employer.");
-                    router.push("/");
-                    return;
-                }
-            } catch (error) {
-                console.error("Error checking employer role:", error);
-                router.push("/");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkEmployerRole().catch(console.error);
-    }, [userId, router, isLoaded]);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -79,10 +41,6 @@ const EmployerContactPage = () => {
             setIsSubmitting(false);
         }
     };
-
-    if (loading) {
-        return <LoadingPage />;
-    }
 
     return (
         <div className={styles.container}>

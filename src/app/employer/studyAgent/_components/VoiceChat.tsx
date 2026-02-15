@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Mic, MicOff, PhoneOff, MessageSquare } from "lucide-react";
 import { ExpandedVoiceCall } from "./ExpandedVoiceCall";
 import { useVAD } from "./utils/vad";
-import { processVadAudio } from "./utils/voiceChatVad";
 import { playTextToSpeech } from "./utils/voiceChatPlayback";
 import type { VoiceChatProps, CallState } from "./types/VoiceChatTypes";
 
@@ -73,26 +72,9 @@ export function VoiceChat({ messages, onSendMessage, onEndCall, isBuddy = false,
     }
   }, [isPlayingAudio, messages]);
 
-  const handleProcessVadAudio = useCallback(
-    (audio: Float32Array, forceProcessing?: boolean) => {
-      void processVadAudio({
-        audio,
-        isProcessingRef,
-        onSendMessage,
-        setError,
-        isMutedRef,
-        forceProcessing,
-      });
-    },
-    [onSendMessage]
-  );
-  
-  // VAD
+  // VAD: used only to interrupt TTS when user speaks (no speech-to-text)
   const vad = useVAD({
     onSpeechRealStart: interruptTTS,
-    onSpeechEnd: (audio: Float32Array) => {
-      void handleProcessVadAudio(audio);
-    },
     onError: (err: Error) => {
       setError(err.message);
       setTimeout(() => setError(null), 3000);

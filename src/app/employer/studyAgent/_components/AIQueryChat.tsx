@@ -23,7 +23,7 @@ export function AIQueryChat({ isBuddy = false, isDark = false }: AIQueryChatProp
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<AIModel>("gpt4");
+  const [selectedModel, setSelectedModel] = useState<AIModel>("gemini");
   const [, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);

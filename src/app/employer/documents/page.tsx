@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 
 import styles from "~/styles/Employer/DocumentViewer.module.css";
 import LoadingPage from "~/app/_components/loading";
@@ -121,7 +121,8 @@ const MAIN_SIDEBAR_MAX_WIDTH = 560;
 
 const DocumentViewer: React.FC = () => {
   const router = useRouter();
-  const { isLoaded, userId } = useAuth();
+  const { user, loading: authLoading } = useEmployerAuth();
+  const userId = user?.userId;
   const [documents, setDocuments] = useState<DocumentType[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<DocumentType | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -212,14 +213,13 @@ const DocumentViewer: React.FC = () => {
   }, [userId]);
 
   useEffect(() => {
-    if (!isLoaded || !userId) return;
+    if (authLoading || !user) return;
 
-    const checkEmployeeRole = async () => {
+    const fetchUserAndCompany = async () => {
       try {
         const response = await fetch("/api/fetchUserInfo", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
         });
 
         if (!response.ok) {
@@ -248,8 +248,8 @@ const DocumentViewer: React.FC = () => {
       }
     };
 
-    checkEmployeeRole().catch(console.error);
-  }, [isLoaded, userId, router]);
+    fetchUserAndCompany().catch(console.error);
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (!userId || isRoleLoading) return;

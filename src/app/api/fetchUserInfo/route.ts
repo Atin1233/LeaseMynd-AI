@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../server/db/index";
-import { company, users } from "../../../server/db/schema";
+import { company } from "../../../server/db/schema";
 import { and, eq } from "drizzle-orm";
-import * as console from "console";
-import { auth } from '@clerk/nextjs/server'
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 
 export async function POST() {
     try {
-        const { userId } = await auth()
-        if (!userId) {
-            return NextResponse.json({ error: "Invalid user." }, { status: 400 });
-        }
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-            .where(eq(users.userId, userId));
-
+        const userInfo = await getEmployerEmployeeUser();
         if (!userInfo) {
             return NextResponse.json({ error: "Invalid user." }, { status: 400 });
         }
@@ -40,7 +30,6 @@ export async function POST() {
             timeStyle: "short",
         });
 
-        // Convert BigInt fields to numbers for JSON serialization
         const serializedUserInfo = {
             ...userInfo,
             companyId: Number(userInfo.companyId),

@@ -53,7 +53,7 @@ export const AgentChatInterface: React.FC<AgentChatInterfaceProps> = ({
             chatId,
             role: 'assistant',
             content: {
-              text: `Hi! I'm your Learning Coach. 👋\n\nI'm here to help you understand and learn from your documents. I'll:\n\n• Break down complex concepts into easy-to-understand explanations\n• Ask you questions to check your understanding\n• Provide examples and analogies to make things clearer\n• Help you connect ideas across different parts of the document\n\nFeel free to ask me anything about ${selectedDocTitle ?? 'your documents'}! I'm here to make learning easier and more engaging for you.`
+              text: `Hi, my name is Lisa, your Learning Coach. 👋\n\nI'm here to help you understand and learn from your documents. I'll:\n\n• Break down complex concepts into easy-to-understand explanations\n• Ask you questions to check your understanding\n• Provide examples and analogies to make things clearer\n• Help you connect ideas across different parts of the document\n\nFeel free to ask me anything about ${selectedDocTitle ?? 'your documents'}! How may I help you today?`
             },
             messageType: 'text',
           }).then((welcomeMsg) => {
@@ -254,10 +254,9 @@ export const AgentChatInterface: React.FC<AgentChatInterfaceProps> = ({
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Brain className="w-16 h-16 text-purple-300 dark:text-purple-600 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">Hi there! 👋</p>
+            <p className="text-gray-500 dark:text-gray-400 text-lg font-medium">Hi, my name is Lisa. 👋</p>
             <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">
-              I&apos;m here to help you understand {searchScope === 'document' ? selectedDocTitle ?? 'your documents' : 'all your company documents'}. 
-              Feel free to ask me anything!
+              How may I help you?
             </p>
           </div>
         ) : (

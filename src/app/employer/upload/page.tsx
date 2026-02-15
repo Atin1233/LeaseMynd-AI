@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Brain, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
-import EmployerAuthCheck from "./EmployerAuthCheck";
 import UploadForm from "./UploadForm";
 import CategoryManagement from "./CategoryManagement";
 import styles from "~/styles/Employer/Upload.module.css";
@@ -98,8 +97,11 @@ const Page: React.FC = () => {
         }
     }, []);
 
+    useEffect(() => {
+        void fetchCategories();
+    }, [fetchCategories]);
+
     return (
-        <EmployerAuthCheck onAuthSuccess={fetchCategories}>
             <div className={styles.mainContainer}>
                 <nav className={styles.navbar}>
                     <div className={styles.navContent}>
@@ -135,7 +137,6 @@ const Page: React.FC = () => {
                 />
                 </div>
             </div>
-        </EmployerAuthCheck>
     );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useEmployerAuth } from "~/lib/auth/EmployerAuthContext";
 import { useRouter } from "next/navigation";
 import { Brain, Home } from "lucide-react";
 
@@ -30,9 +30,7 @@ interface Company {
 const SettingsPage = () => {
     const router = useRouter();
 
-    // Clerk Auth
-    const { isLoaded, userId } = useAuth();
-    const { user } = useUser();
+    const { user, loading: authLoading } = useEmployerAuth();
 
     // --------------------------------------------------------------------------
     // Page & Form States
@@ -40,9 +38,8 @@ const SettingsPage = () => {
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Existing fields (from Clerk user)
-    const [displayName, setDisplayName] = useState(user?.fullName ?? "");
-    const [email, setEmail] = useState(user?.emailAddresses[0]?.emailAddress ?? "");
+    const [displayName, setDisplayName] = useState(user?.name ?? "");
+    const [email, setEmail] = useState(user?.email ?? "");
 
     // New fields
     const [companyName, setCompanyName] = useState("");
@@ -83,31 +80,10 @@ const SettingsPage = () => {
     // Fetch & Validate on Mount
     // --------------------------------------------------------------------------
     useEffect(() => {
-        if (!isLoaded) return;
+        if (authLoading || !user) return;
 
-        if (!userId) {
-            // Show popup and redirect home
-            showPopupAndRedirect("Authentication failed! No user found.", "/");
-            return;
-        }
-
-        const checkEmployerAndFetchCompany = async () => {
+        const fetchCompany = async () => {
             try {
-                // 1) Verify the user is an employer
-                const response = await fetch("/api/employerAuth", {
-                    method: "GET",
-                });
-
-                if (response.status === 300) {
-                    router.push("/employee/pending-approval");
-                    return;
-                } else if (!response.ok) {
-                    window.alert("Authentication failed! You are not an employer.");
-                    router.push("/");
-                    return;
-                }
-
-                // 2) Fetch company info
                 const companyResponse = await fetch("/api/fetchCompany", {
                     method: "GET",
                 });
@@ -128,8 +104,8 @@ const SettingsPage = () => {
                 setEmployeePasskey(data.employeepasskey ?? "");
                 setStaffCount(data.numberOfEmployees ?? "");
 
-                setDisplayName(user?.fullName ?? "");
-                setEmail(user?.emailAddresses[0]?.emailAddress ?? "");
+                setDisplayName(user.name ?? "");
+                setEmail(user.email ?? "");
             } catch (error) {
                 console.error("Error:", error);
                 showPopupAndRedirect("Something went wrong. Redirecting you home.", "/");
@@ -138,8 +114,8 @@ const SettingsPage = () => {
             }
         };
 
-        void checkEmployerAndFetchCompany();
-    }, [isLoaded, userId, user, router]);
+        void fetchCompany();
+    }, [authLoading, user, router]);
 
     // --------------------------------------------------------------------------
     // Save Handler
@@ -178,7 +154,7 @@ const SettingsPage = () => {
     // --------------------------------------------------------------------------
     // Render
     // --------------------------------------------------------------------------
-    if (loading) {
+    if (authLoading || !user || loading) {
         return <LoadingPage />;
     }
 
