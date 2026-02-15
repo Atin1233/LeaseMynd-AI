@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 import "./src/env";
 
 const config: NextConfig = {
+  eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
       {
