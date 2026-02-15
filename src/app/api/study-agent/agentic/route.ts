@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { runStudyBuddyAgent } from "./orchestrator";
 import { buildAgentRequest, parseIncomingStudyAgentPayload } from "./request";
 
@@ -18,10 +18,11 @@ export const maxDuration = 120; // Allow up to 2 minutes for complex workflows
  */
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const rawBody: unknown = await request.json();
     const parsedBody = parseIncomingStudyAgentPayload(rawBody);

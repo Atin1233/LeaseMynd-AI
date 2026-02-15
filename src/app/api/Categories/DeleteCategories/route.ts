@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../server/db/index";
-import { category, users } from "../../../../server/db/schema";
+import { category } from "../../../../server/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { validateRequestBody } from "~/lib/validation";
 import { z } from "zod";
 
@@ -17,19 +17,8 @@ export async function DELETE(request: Request) {
             return validation.response;
         }
 
-			const { userId } = await auth();
-			if (!userId) {
-				return NextResponse.json({ error: "Invalid user." }, { status: 400 });
-			}
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-				.where(eq(users.userId, userId));
-        
-        if (!userInfo) {
-            return NextResponse.json({ error: "Invalid user." }, { status: 400 });
-        } else if (userInfo.role !== "employer" && userInfo.role !== "owner") {
+        const userInfo = await getEmployerEmployeeUser();
+        if (!userInfo || (userInfo.role !== "employer" && userInfo.role !== "owner")) {
             return NextResponse.json({ error: "Invalid user role." }, { status: 400 });
         }
 

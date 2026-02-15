@@ -3,26 +3,14 @@ import { db } from "../../../server/db/index";
 import { users } from "../../../server/db/schema";
 import {eq, and } from "drizzle-orm";
 import * as console from "console";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 export async function GET() {
     try {
-        const { userId } = await auth();
-        if (!userId) {
-            return NextResponse.json({
-                success: false,
-                message: "Unauthorized"
-            }, { status: 401 });
-        }
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-            .where(eq(users.userId, userId));
-
+        const userInfo = await getEmployerEmployeeUser();
         if (!userInfo) {
             return NextResponse.json(
-                { error: "Invalid user." },
-                { status: 400 }
+                { success: false, message: "Unauthorized" },
+                { status: 401 }
             );
         }
 

@@ -1,42 +1,21 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { auth } from "@clerk/nextjs/server";
-
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { db } from "../../../server/db/index";
-import { company, users } from "../../../server/db/schema";
+import { company } from "../../../server/db/schema";
 import { validateRequestBody, UpdateCompanySchema } from "~/lib/validation";
 
 const AUTHORIZED_ROLES = new Set(["employer", "owner"]);
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized",
-        },
-        { status: 401 }
-      );
-    }
-
     const validation = await validateRequestBody(request, UpdateCompanySchema);
     if (!validation.success) {
       return validation.response;
     }
     const { name, employerPasskey, employeePasskey, numberOfEmployees } = validation.data;
 
-    const [userRecord] = await db
-      .select({
-        id: users.id,
-        companyId: users.companyId,
-        role: users.role,
-      })
-      .from(users)
-      .where(eq(users.userId, userId));
-
+    const userRecord = await getEmployerEmployeeUser();
     if (!userRecord) {
       return NextResponse.json(
         {

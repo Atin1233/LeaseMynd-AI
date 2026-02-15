@@ -12,7 +12,7 @@ import {
     type SearchResult
 } from "~/server/rag";
 import { validateRequestBody, QuestionSchema } from "~/lib/validation";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { qaRequestCounter, qaRequestDuration } from "~/server/metrics/registry";
 import { users, document } from "~/server/db/schema";
 import { performWebSearch, type WebSearchResult } from "./services/webSearch";
@@ -131,14 +131,15 @@ export async function POST(request: Request) {
             return validation.response;
         }
 
-        const { userId } = await auth();
-        if (!userId) {
+        const user = await getEmployerEmployeeUser();
+        if (!user) {
             recordResult("error");
             return NextResponse.json({
                 success: false,
                 message: "Unauthorized"
             }, { status: 401 });
         }
+        const userId = user.userId;
 
         const {
             documentId,

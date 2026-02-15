@@ -10,11 +10,14 @@ import { db } from "../../../server/db/index";
 import { users, document, pdfChunks } from "../../../server/db/schema";
 import { validateRequestBody, UploadDocumentSchema } from "~/lib/validation";
 
-import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { OpenAIEmbeddings } from "@langchain/openai";
 import type { Document } from "langchain/document";
+import { createGoogleEmbeddings } from "~/lib/ai";
 import { processPDFWithOCR } from "../services/ocrService";
+import {
+  loadPdfFromPath,
+  splitPdfIntoChunks,
+  sanitizeChunkContent,
+} from "~/lib/pdf/processor";
 import { withRateLimit } from "~/lib/rate-limit-middleware";
 import { RateLimitPresets } from "~/lib/rate-limiter";
 
@@ -59,7 +62,7 @@ export async function POST(request: Request) {
             throw new UploadError("Invalid user.", 400);
         }
 
-        if (!process.env.OPENAI_API_KEY) {
+        if (!process.env.GOOGLE_AI_API_KEY) {
             throw new UploadError("Embedding service is not configured.", 500);
         }
 
@@ -127,28 +130,22 @@ export async function POST(request: Request) {
             tempFilePath = path.join(os.tmpdir(), `${TEMP_FILE_PREFIX}${randomUUID()}.pdf`);
             await fs.writeFile(tempFilePath, pdfBuffer);
 
-            const loader = new PDFLoader(tempFilePath);
-            const docs = await loader.load() as Document<PDFMetadata>[];
+            const docs = await loadPdfFromPath(tempFilePath);
             if (docs.length === 0) {
                 throw new UploadError("No readable content found in the provided PDF.", 422);
             }
 
-            sourceDocuments = docs;
+            sourceDocuments = docs as Document<PDFMetadata>[];
         }
 
         if (sourceDocuments.length === 0) {
             throw new UploadError("Unable to extract any content from the document.", 422);
         }
 
-        // Split text into chunks (unified for both paths)
+        // Split text into chunks (unified for both paths; shared processor)
         console.log(`🔍 [SPLITTER] Splitting ${sourceDocuments.length} source documents`);
-        
-        const textSplitter = new RecursiveCharacterTextSplitter({
-            chunkSize: 1000,
-            chunkOverlap: 200,
-        });
-        
-        const allSplits = (await textSplitter.splitDocuments(sourceDocuments)) as Document<PDFMetadata>[];
+
+        const allSplits = (await splitPdfIntoChunks(sourceDocuments)) as Document<PDFMetadata>[];
         
         console.log(`✅ [SPLITTER] Created ${allSplits.length} chunks from ${sourceDocuments.length} documents`);
         console.log(`📄 [SPLITTER] Page numbers in splits: ${allSplits.map(s => s.metadata.loc?.pageNumber).join(', ')}`);
@@ -157,10 +154,7 @@ export async function POST(request: Request) {
             throw new UploadError("Unable to split document into chunks.", 422);
         }
 
-        const embeddings = new OpenAIEmbeddings({
-            model: "text-embedding-ada-002",
-            openAIApiKey: process.env.OPENAI_API_KEY,
-        });
+        const embeddings = createGoogleEmbeddings();
 
         const chunkTexts = allSplits.map((split) => split.pageContent);
         const chunkEmbeddings = await embeddings.embedDocuments(chunkTexts);
@@ -170,8 +164,7 @@ export async function POST(request: Request) {
         }
 
         const chunkPayload = allSplits.map((split, index) => {
-            const noNullContent = split.pageContent.replace(/\0/g, "");
-            const sanitizedContent = noNullContent.trim() || noNullContent || " ";
+            const sanitizedContent = sanitizeChunkContent(split.pageContent);
 
             const embedding = chunkEmbeddings[index];
             if (!embedding) {
@@ -209,7 +202,7 @@ export async function POST(request: Request) {
                 documentId: BigInt(insertedDocument.id),
                 page: chunk.page,
                 content: chunk.content,
-                embedding: sql`${chunk.embeddingVector}::vector(1536)`,
+                embedding: sql`${chunk.embeddingVector}::vector(768)`,
             }));
 
             await tx.insert(pdfChunks).values(rowsToInsert);

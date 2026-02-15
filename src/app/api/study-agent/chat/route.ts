@@ -5,8 +5,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { ChatOpenAI } from "@langchain/openai";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
+import { createChatModel } from "~/lib/ai";
 import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 
 import type { EmotionTag } from "./types";
@@ -103,10 +103,11 @@ function processResponseForTTS(rawScript: string): {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const parsedBody = parseChatRequest(await request.json());
     const {
@@ -128,9 +129,9 @@ export async function POST(request: Request) {
     console.log("   Study Plan Items:", studyPlan?.length ?? 0);
     console.log("   Conversation History:", conversationHistory?.length ?? 0, "messages");
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GOOGLE_AI_API_KEY) {
       return NextResponse.json(
-        { error: "OpenAI API key not configured" },
+        { error: "Google AI API key not configured" },
         { status: 500 }
       );
     }
@@ -255,12 +256,10 @@ export async function POST(request: Request) {
 
     messages.push(new HumanMessage(message));
 
-    // Initialize OpenAI and generate response
-    const chat = new ChatOpenAI({
-      openAIApiKey: process.env.OPENAI_API_KEY,
-      modelName: "gpt-4o-mini",
+    const chat = createChatModel({
+      model: "gemini-2.0-flash",
       temperature: 0.7,
-      timeout: 30000,
+      timeout: 30_000,
     });
 
     console.log("🤖 [StudyAgent Chat API] Generating AI response...");

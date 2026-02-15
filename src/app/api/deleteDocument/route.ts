@@ -3,7 +3,7 @@ import { db } from "../../../server/db/index";
 import { document, ChatHistory, documentReferenceResolution, pdfChunks, users } from "../../../server/db/schema";
 import { eq } from "drizzle-orm";
 import { validateRequestBody, DeleteDocumentSchema } from "~/lib/validation";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 
 export async function DELETE(request: Request) {
     try {
@@ -12,19 +12,7 @@ export async function DELETE(request: Request) {
             return validation.response;
         }
 
-        const { userId } = await auth();
-        if (!userId) {
-            return NextResponse.json({
-                success: false,
-                message: "Invalid user."
-            }, { status: 401 });
-        }
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-            .where(eq(users.userId, userId));
-
+        const userInfo = await getEmployerEmployeeUser();
         if (!userInfo) {
             return NextResponse.json({
                 success: false,

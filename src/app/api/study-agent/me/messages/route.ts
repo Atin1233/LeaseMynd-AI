@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { and, eq, asc } from "drizzle-orm";
 
 import { db } from "~/server/db";
@@ -15,10 +15,11 @@ import { parseSessionId, serializeBigInt } from "../../shared";
 
 export async function POST(request: Request) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        const user = await getEmployerEmployeeUser();
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const userId = user.userId;
 
         const body = (await request.json()) as {
             sessionId?: number | string;
@@ -137,10 +138,11 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        const user = await getEmployerEmployeeUser();
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const userId = user.userId;
 
         const session = await resolveSessionForUser(userId, parseSessionId(request));
         if (!session) {
@@ -175,10 +177,11 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        const user = await getEmployerEmployeeUser();
+        if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const userId = user.userId;
 
         const session = await resolveSessionForUser(userId, parseSessionId(request));
         if (!session) {

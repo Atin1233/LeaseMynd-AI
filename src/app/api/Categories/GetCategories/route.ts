@@ -1,24 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "../../../../server/db";
-import {category, users} from "../../../../server/db/schema";
+import { category } from "../../../../server/db/schema";
 import { eq } from "drizzle-orm";
-import * as console from "console";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 
 export async function GET(_request: Request) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
+        const userInfo = await getEmployerEmployeeUser();
+        if (!userInfo) {
             return NextResponse.json(
                 { error: "Invalid user." },
                 { status: 400 }
             );
         }
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-            .where(eq(users.userId, userId));
 
         if (!userInfo) {
             return NextResponse.json(

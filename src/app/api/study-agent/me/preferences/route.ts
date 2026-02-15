@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -37,10 +37,11 @@ function toPreferencesResponse(row: typeof studyAgentPreferences.$inferSelect) {
 
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const session = await resolveSessionForUser(userId, parseSessionId(request));
     if (!session) {
@@ -71,10 +72,11 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const body = (await request.json().catch(() => ({}))) as {
       sessionId?: number;

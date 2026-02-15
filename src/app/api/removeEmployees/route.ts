@@ -1,7 +1,7 @@
 import { db } from "../../../server/db/index";
 import { users } from "../../../server/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import {
     handleApiError,
     createSuccessResponse,
@@ -17,18 +17,9 @@ type PostBody = {
 
 export async function POST(request: Request) {
     try {
-        const { userId } = await auth();
-        if (!userId) {
-            return createUnauthorizedError("Authentication required. Please sign in to continue.");
-        }
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-            .where(eq(users.userId, userId));
-
+        const userInfo = await getEmployerEmployeeUser();
         if (!userInfo) {
-            return createNotFoundError("User account not found. Please contact support.");
+            return createUnauthorizedError("Authentication required. Please sign in to continue.");
         }
 
         if (userInfo.role !== "employer" && userInfo.role !== "owner") {

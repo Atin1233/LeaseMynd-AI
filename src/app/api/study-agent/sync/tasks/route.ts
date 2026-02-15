@@ -4,8 +4,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
-import { manageTasks } from "../../agentic/tools/UNUSED_task-manager";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
+import { manageTasks } from "../../agentic/tools/task-manager";
 
 export const runtime = "nodejs";
 
@@ -14,10 +14,11 @@ export const runtime = "nodejs";
  */
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as "pending" | "in_progress" | "completed" | "cancelled" | null;
@@ -51,10 +52,11 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const body = (await request.json()) as {
       action?: "create" | "update" | "delete" | "complete";

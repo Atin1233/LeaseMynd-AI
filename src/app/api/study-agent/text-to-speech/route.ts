@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 /**
@@ -35,9 +35,8 @@ interface TextToSpeechRequest {
 
 export async function POST(request: Request) {
   try {
-    // Authenticate user
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }

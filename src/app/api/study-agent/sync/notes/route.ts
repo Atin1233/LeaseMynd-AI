@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { manageNotes } from "../../agentic/tools/note-taking";
 import { type StudyNote } from "../../agentic/types";
 
@@ -30,10 +30,11 @@ function parseSessionIdFromUrl(request: Request): number {
  */
 export async function GET(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const url = new URL(request.url);
     const sessionId = parseSessionIdFromUrl(request);
@@ -97,10 +98,11 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
-    if (!userId) {
+    const user = await getEmployerEmployeeUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = user.userId;
 
     const sessionIdFromQuery = parseSessionIdFromUrl(request);
     if (!Number.isFinite(sessionIdFromQuery)) {

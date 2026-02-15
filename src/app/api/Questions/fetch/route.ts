@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "~/server/db/index";
@@ -15,20 +15,7 @@ export async function POST(request: Request) {
 
         const { documentId } = validation.data;
 
-        const { userId } = await auth();
-        if (!userId) {
-            return NextResponse.json({
-                success: false,
-                message: "Unauthorized"
-            }, { status: 401 });
-        }
-
-        const [requestingUser] = await db
-            .select()
-            .from(users)
-            .where(eq(users.userId, userId))
-            .limit(1);
-
+        const requestingUser = await getEmployerEmployeeUser();
         if (!requestingUser) {
             return NextResponse.json({
                 success: false,
@@ -61,7 +48,7 @@ export async function POST(request: Request) {
             .from(ChatHistory)
             .where(
                 and(
-                    eq(ChatHistory.UserId, userId),
+                    eq(ChatHistory.UserId, requestingUser.userId),
                     eq(ChatHistory.documentId, BigInt(targetDocument.id))
                 )
             );

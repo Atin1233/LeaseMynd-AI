@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db/index";
-import { users, category } from "~/server/db/schema";
-import { eq } from "drizzle-orm";
+import { category } from "~/server/db/schema";
 import { z } from "zod";
 import { validateRequestBody } from "~/lib/validation";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 
 const AddCategorySchema = z.object({
     CategoryName: z.string().min(1, "Category name is required").max(256, "Category name is too long"),
@@ -18,27 +17,10 @@ export async function POST(request: Request) {
             return validation.response;
         }
 
-			const { userId } = await auth();
-			if (!userId) {
-				return NextResponse.json(
-					{ error: "Invalid user." },
-					{ status: 400 }
-				);
-			}
-
-        const [userInfo] = await db
-            .select()
-            .from(users)
-				.where(eq(users.userId, userId));
-
-        if (!userInfo) {
+        const userInfo = await getEmployerEmployeeUser();
+        if (!userInfo || (userInfo.role !== "employer" && userInfo.role !== "owner")) {
             return NextResponse.json(
                 { error: "Invalid user." },
-                { status: 400 }
-            );
-        } else if (userInfo.role !== "employer" && userInfo.role !== "owner") {
-            return NextResponse.json(
-                { error: "Invalid user role." },
                 { status: 400 }
             );
         }
