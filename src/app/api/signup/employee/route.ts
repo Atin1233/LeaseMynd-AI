@@ -4,7 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { handleApiError, createSuccessResponse, createValidationError } from "~/lib/api-utils";
 
 type PostBody = {
-    userId: string;
+    supabase_user_id?: string;
+    supabaseUserId?: string;
     name: string;
     email: string;
     employeePasskey: string;
@@ -13,9 +14,15 @@ type PostBody = {
 
 export async function POST(request: Request) {
     try {
-        const { userId, name, email, employeePasskey, companyName } = (await request.json()) as PostBody;
+        const body = (await request.json()) as PostBody;
+        const { name, email, employeePasskey, companyName } = body;
+        const userId = body.supabase_user_id ?? body.supabaseUserId;
+        if (!userId) {
+            return createValidationError(
+                "supabase_user_id is required."
+            );
+        }
 
-        // Find company by company name
         const [existingCompany] = await db
             .select()
             .from(company)
@@ -32,11 +39,11 @@ export async function POST(request: Request) {
             );
         }
 
-        // Insert new user
         await db.insert(users).values({
             userId,
-            name: name,
-            email: email,
+            supabaseUserId: userId,
+            name,
+            email,
             companyId: BigInt(existingCompany.id),
             status: "pending",
             role: "employee",

@@ -4,17 +4,24 @@ import { and, eq } from "drizzle-orm";
 import { handleApiError, createSuccessResponse, createValidationError } from "~/lib/api-utils";
 
 type PostBody = {
-    userId: string;
+    supabase_user_id?: string;
+    supabaseUserId?: string;
     name: string;
     email: string;
     employerPasskey: string;
     companyName: string;
-}
-
+};
 
 export async function POST(request: Request) {
     try {
-        const {userId, name, email, employerPasskey, companyName} = (await request.json()) as PostBody;
+        const body = (await request.json()) as PostBody;
+        const { name, email, employerPasskey, companyName } = body;
+        const userId = body.supabase_user_id ?? body.supabaseUserId;
+        if (!userId) {
+            return createValidationError(
+                "supabase_user_id is required."
+            );
+        }
 
         let companyId: bigint;
         const [existingCompany] = await db
@@ -33,11 +40,11 @@ export async function POST(request: Request) {
             );
         }
 
-        // eslint-disable-next-line prefer-const
         companyId = BigInt(existingCompany.id);
 
         await db.insert(users).values({
             userId,
+            supabaseUserId: userId,
             name,
             email,
             companyId,
