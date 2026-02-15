@@ -4,7 +4,7 @@
  */
 
 export {
-  createOpenAIEmbeddings,
+  createGoogleEmbeddingsForRag,
   createDocumentEnsembleRetriever,
   createCompanyEnsembleRetriever,
   createMultiDocEnsembleRetriever,

@@ -8,6 +8,7 @@ import {
     serial,
     text,
     timestamp,
+    uuid,
     varchar,
     bigint,
 } from "drizzle-orm/pg-core";
@@ -26,6 +27,7 @@ export const users = pgTable(
         name: varchar("name", { length: 256 }).notNull(),
         email: varchar("email", { length: 256 }).notNull(),
         userId: varchar("userId", { length: 256 }).notNull().unique(),
+        supabaseUserId: uuid("supabase_user_id").unique(),
         companyId: bigint("company_id", { mode: "bigint" })
             .notNull()
             .references(() => company.id, { onDelete: "cascade" }),
@@ -41,6 +43,7 @@ export const users = pgTable(
     (table) => ({
         companyIdIdx: index("users_company_id_idx").on(table.companyId),
         userIdIdx: index("users_user_id_idx").on(table.userId),
+        supabaseUserIdIdx: index("users_supabase_user_id_idx").on(table.supabaseUserId),
     })
 );
 
@@ -134,7 +137,7 @@ export const pdfChunks = pgTable(
         page: integer("page").notNull(),
         chunkIndex: integer("chunk_index").notNull().default(0), // deterministic ordering within a page
         content: text("content").notNull(),
-        embedding: pgVector({ dimension: 1536 })("embedding"),
+        embedding: pgVector({ dimension: 768 })("embedding"),
     },
     (table) => ({
         documentIdIdx: index("pdf_chunks_document_id_idx").on(table.documentId),
@@ -158,7 +161,7 @@ export const ChatHistory = pgTable(
     "chat_history",
     {
         id: serial("id").primaryKey(),
-        UserId: varchar("user_id", { length: 256 }).notNull(), // Clerk user ID
+        UserId: varchar("user_id", { length: 256 }).notNull(), // Supabase user ID
         documentId: bigint("document_id", { mode: "bigint" })
             .notNull()
             .references(() => document.id, { onDelete: "cascade" }),
