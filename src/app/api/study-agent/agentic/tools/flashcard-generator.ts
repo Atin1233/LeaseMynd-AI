@@ -5,8 +5,8 @@
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ChatOpenAI } from "@langchain/openai";
 import { v4 as uuidv4 } from "uuid";
+import { createChatModel } from "~/lib/ai";
 import type { Flashcard, FlashcardGenerationInput } from "../types";
 
 const FlashcardSchema = z.object({
@@ -52,10 +52,10 @@ export async function generateFlashcards(
   const startTime = Date.now();
 
   try {
-    const chat = new ChatOpenAI({
-      modelName: "gpt-4o-mini",
+    const chat = createChatModel({
+      model: "gemini-2.0-flash",
       temperature: 0.7,
-      timeout: 30000,
+      timeout: 30_000,
     });
 
     const difficultyInstruction =

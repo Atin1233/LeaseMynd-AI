@@ -5,15 +5,15 @@
 
 import { ragSearchTool, executeRAGSearch } from "./rag-search";
 import { webResearchTool, performWebResearch } from "./web-research";
-import { flashcardTool, generateFlashcards } from "./UNUSED_flashcard-generator";
-import { quizTool, generateQuiz } from "./UNUSED_quiz-generator";
+import { flashcardTool, generateFlashcards } from "./flashcard-generator";
+import { quizTool, generateQuiz } from "./quiz-generator";
 import {
   conceptExplainerTool,
   explainConcept,
-} from "./UNUSED_concept-explainer";
-import { studyPlanTool, createOrUpdateStudyPlan } from "./UNUSED_study-plan";
-import { progressTrackerTool, trackProgress } from "./UNUSED_progress-tracker";
-import { taskManagerTool, manageTasks } from "./UNUSED_task-manager";
+} from "./concept-explainer";
+import { studyPlanTool, createOrUpdateStudyPlan } from "./study-plan";
+import { progressTrackerTool, trackProgress } from "./progress-tracker";
+import { taskManagerTool, manageTasks } from "./task-manager";
 import { pomodoroTool, managePomodoro } from "./pomodoro-timer";
 import { noteTakingTool, manageNotes } from "./note-taking";
 
@@ -25,7 +25,7 @@ const notesAndResearchTools = [noteTakingTool, webResearchTool];
 
 /**
  * All available tools for the Study Buddy Agent.
- * NOTE: Some tools still live in `UNUSED_*` files; confirm before removing them.
+ * All tools are colocated in this directory.
  */
 export const studyBuddyTools = [
   ...learningTools,

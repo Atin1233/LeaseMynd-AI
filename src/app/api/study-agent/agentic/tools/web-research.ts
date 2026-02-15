@@ -6,7 +6,7 @@
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { performTavilySearch, type WebSearchResult } from "~/app/api/AIAssistant/services/tavilySearch";
+import { performWebSearch, type WebSearchResult } from "~/app/api/AIAssistant/services/webSearch";
 
 const WebResearchSchema = z.object({
   query: z.string().describe("The search query for web research"),
@@ -24,7 +24,7 @@ interface EnrichedWebResult extends WebSearchResult {
 }
 
 /**
- * Perform web research using Tavily
+ * Perform web research using DuckDuckGo
  */
 export async function performWebResearch(
   query: string,
@@ -37,7 +37,6 @@ export async function performWebResearch(
   const startTime = Date.now();
 
   try {
-    // Adjust query based on search type
     let adjustedQuery = query;
     if (searchType === "academic") {
       adjustedQuery = `academic research: ${query}`;
@@ -45,7 +44,7 @@ export async function performWebResearch(
       adjustedQuery = `latest news: ${query}`;
     }
 
-    const results = await performTavilySearch(adjustedQuery, maxResults);
+    const results = await performWebSearch(adjustedQuery, maxResults);
 
     if (results.length === 0) {
       return {

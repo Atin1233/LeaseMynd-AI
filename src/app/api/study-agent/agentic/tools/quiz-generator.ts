@@ -5,7 +5,7 @@
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ChatOpenAI } from "@langchain/openai";
+import { createChatModel } from "~/lib/ai";
 import { v4 as uuidv4 } from "uuid";
 import type { Quiz, QuizQuestion, QuizGenerationInput } from "../types";
 
@@ -68,10 +68,10 @@ export async function generateQuiz(input: QuizGenerationInput): Promise<Quiz> {
   const startTime = Date.now();
 
   try {
-    const chat = new ChatOpenAI({
-      modelName: "gpt-4o-mini",
+    const chat = createChatModel({
+      model: "gemini-2.0-flash",
       temperature: 0.7,
-      timeout: 45000,
+      timeout: 45_000,
     });
 
     const typesList = input.questionTypes?.join(", ") ?? "multiple-choice, true-false";

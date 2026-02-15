@@ -6,7 +6,7 @@
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ChatOpenAI } from "@langchain/openai";
+import { createChatModel } from "~/lib/ai";
 import type { StudyPlanInput } from "../types";
 
 const StudyPlanSchema = z.object({
@@ -69,10 +69,10 @@ export async function createOrUpdateStudyPlan(
   const startTime = Date.now();
 
   try {
-    const chat = new ChatOpenAI({
-      modelName: "gpt-4o-mini",
+    const chat = createChatModel({
+      model: "gemini-2.0-flash",
       temperature: 0.7,
-      timeout: 30000,
+      timeout: 30_000,
     });
 
     const response = await chat.invoke([
