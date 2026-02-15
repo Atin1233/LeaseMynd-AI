@@ -12,7 +12,7 @@ import { BM25Retriever } from "@langchain/community/retrievers/bm25";
 import { EnsembleRetriever } from "langchain/retrievers/ensemble";
 import { BaseRetriever, type BaseRetrieverInput } from "@langchain/core/retrievers";
 import { Document } from "@langchain/core/documents";
-import type { OpenAIEmbeddings } from "@langchain/openai";
+import type { EmbeddingsProvider } from "~/server/rag/types";
 import type { CallbackManagerForRetrieverRun } from "@langchain/core/callbacks/manager";
 
 export interface DocumentEnsembleOptions {
@@ -47,12 +47,12 @@ class DocumentANNVectorRetriever extends BaseRetriever {
     
     private documentId: number;
     private topK: number;
-    private embeddings: OpenAIEmbeddings;
+    private embeddings: EmbeddingsProvider;
     
     constructor(fields: BaseRetrieverInput & {
         documentId: number;
         topK?: number;
-        embeddings: OpenAIEmbeddings;
+        embeddings: EmbeddingsProvider;
     }) {
         super(fields);
         this.documentId = fields.documentId;
@@ -75,11 +75,11 @@ class DocumentANNVectorRetriever extends BaseRetriever {
                     c.page,
                     c.document_id,
                     d.title as document_title,
-                    c.embedding <-> ${bracketedEmbedding}::vector(1536) AS distance
+                    c.embedding <-> ${bracketedEmbedding}::vector(768) AS distance
                 FROM pdr_ai_v2_pdf_chunks c
                 JOIN pdr_ai_v2_document d ON c.document_id = d.id 
                 WHERE c.document_id = ${this.documentId}
-                ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(1536)
+                ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(768)
                 LIMIT ${this.topK}
             `;
             
@@ -160,7 +160,7 @@ async function createDocumentBM25Retriever(
 
 export async function createDocumentEnsembleRetriever(
     documentId: number,
-    embeddings: OpenAIEmbeddings,
+    embeddings: EmbeddingsProvider,
     options: DocumentEnsembleOptions
 ): Promise<EnsembleRetriever> {
     const { weights = [0.4, 0.6], topK = 5 } = options;
@@ -182,7 +182,7 @@ export async function createDocumentEnsembleRetriever(
 export async function documentEnsembleSearch(
     documentId: number,
     query: string,
-    embeddings: OpenAIEmbeddings,
+    embeddings: EmbeddingsProvider,
     options: DocumentEnsembleOptions
 ): Promise<DocumentSearchResult[]> {
     try {

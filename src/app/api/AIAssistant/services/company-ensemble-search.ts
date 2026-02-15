@@ -12,7 +12,7 @@ import { BM25Retriever } from "@langchain/community/retrievers/bm25";
 import { EnsembleRetriever } from "langchain/retrievers/ensemble";
 import { BaseRetriever, type BaseRetrieverInput } from "@langchain/core/retrievers";
 import { Document } from "@langchain/core/documents";
-import type { OpenAIEmbeddings } from "@langchain/openai";
+import type { EmbeddingsProvider } from "~/server/rag/types";
 import type { CallbackManagerForRetrieverRun } from "@langchain/core/callbacks/manager";
 
 export interface CompanyEnsembleOptions {
@@ -49,12 +49,12 @@ class CompanyANNVectorRetriever extends BaseRetriever {
     
     private companyId: number;
     private topK: number;
-    private embeddings: OpenAIEmbeddings;
+    private embeddings: EmbeddingsProvider;
     
     constructor(fields: BaseRetrieverInput & {
         companyId: number;
         topK?: number;
-        embeddings: OpenAIEmbeddings;
+        embeddings: EmbeddingsProvider;
     }) {
         super(fields);
         this.companyId = fields.companyId;
@@ -77,11 +77,11 @@ class CompanyANNVectorRetriever extends BaseRetriever {
                     c.page,
                     c.document_id,
                     d.title as document_title,
-                    c.embedding <-> ${bracketedEmbedding}::vector(1536) AS distance
+                    c.embedding <-> ${bracketedEmbedding}::vector(768) AS distance
                 FROM pdr_ai_v2_pdf_chunks c
                 JOIN pdr_ai_v2_document d ON c.document_id = d.id 
                 WHERE d.company_id = ${this.companyId.toString()}
-                ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(1536)
+                ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(768)
                 LIMIT ${this.topK}
             `;
             
@@ -162,7 +162,7 @@ async function createCompanyBM25Retriever(
 
 export async function createCompanyEnsembleRetriever(
     companyId: number,
-    embeddings: OpenAIEmbeddings,
+    embeddings: EmbeddingsProvider,
     options: CompanyEnsembleOptions
 ): Promise<EnsembleRetriever> {
     const { weights = [0.4, 0.6], topK = 10 } = options;
@@ -184,7 +184,7 @@ export async function createCompanyEnsembleRetriever(
 export async function companyEnsembleSearch(
     companyId: number,
     query: string,
-    embeddings: OpenAIEmbeddings,
+    embeddings: EmbeddingsProvider,
     options: CompanyEnsembleOptions
 ): Promise<CompanySearchResult[]> {
     try {

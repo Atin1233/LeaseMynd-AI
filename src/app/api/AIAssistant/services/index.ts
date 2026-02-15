@@ -17,10 +17,3 @@ export {
   type DocumentSearchResult,
   type SearchResult,
 } from "~/server/rag";
-
-// Keep deprecated exports for backward compatibility
-export {
-    ensembleSearch,
-    createEnsembleRetriever,
-    type EnsembleOptions
-} from './DEPRECATED_hybrid-bm25-ann';
