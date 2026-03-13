@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* LeaseAI Design System - PRD Section 5 */
+  --bg-primary: #fafaf9;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f5f5f4;
+  --text-primary: #1a2332;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-default: #e5e7eb;
+  --border-subtle: #f3f4f6;
+  /* PRD Color Palette */
+  --primary-navy: #1a2332;
+  --secondary-orange: #ff6b35;
+  --success-green: #2d5a3d;
+  --warning-amber: #f59e0b;
+  --danger-red: #dc2626;
+  --neutral-gray: #6b7280;
+  /* Semantic aliases */
+  --accent-primary: #1a2332;
+  --accent-secondary: #ff6b35;
+  --success: #2d5a3d;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+  /* Component specs */
+  --radius-button: 8px;
+  --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Landing page (LeaseAI/LeaseMynd – logo palette) */
+  --background: #ffffff;
+  --foreground: #1a2332;
+  --primary: #ff6b35;
+  --secondary: #1a2332;
+  --primary-accent: #e85a2a;
+  --foreground-accent: #6b7280;
+  --hero-background: #f5f5f4;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -15,36 +52,223 @@ html, body {
   box-sizing: border-box;
 }
 
-
-
-/* Theme Toggle Button */
-
-.theme-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: inherit;
+/* Heading font class */
+.heading-font {
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-[data-theme="dark"] .theme-toggle-btn {
-  color: #c084fc;
+/* Professional link styling */
+a {
+  transition: color 0.15s ease;
 }
 
-[data-theme="light"] .theme-toggle-btn {
-  color: #7c3aed;
+/* PRD: 8px rounded corners for buttons, cards - restore standard Tailwind radius */
+.prd-button {
+  border-radius: var(--radius-button);
+}
+.prd-card {
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
 }
 
-.theme-toggle-btn:hover {
-  background: rgba(124, 58, 237, 0.1);
-  transform: scale(1.1);
+/* Smooth transitions for interactive elements */
+button,
+[role="button"] {
+  transition: all 0.2s ease;
 }
 
-.theme-toggle-btn:active {
-  transform: scale(0.95);
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Smooth fade-in animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Smooth slide-in from right */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Smooth scale on hover for cards */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Smooth transitions for table rows */
+tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Loading pulse animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  /* Mobile-specific adjustments */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Finwise landing: Manrope for headings when using landing components */
+.manrope {
+  font-family: "Manrope", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+.benefit-section:last-of-type > div {
+  margin-bottom: 2.5rem;
+}
+
+#logos svg {
+  height: 2.5rem;
+  width: fit-content;
+}
+@media (min-width: 640px) {
+  #logos svg {
+    height: 3rem;
+  }
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better text rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Stagger animation for lists */
+@keyframes stagger {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-stagger {
+  animation: stagger 0.3s ease-out forwards;
+}
+
+/* Mobile touch improvements - PRD: Touch-friendly, large tap targets */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Responsive container - PRD: Mobile-first */
+@media (max-width: 640px) {
+  .mobile-stack {
+    flex-direction: column;
+  }
+}
+
+/* Skeleton loading - PRD: Loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--border-default) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
 }

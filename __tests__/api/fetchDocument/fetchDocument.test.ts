@@ -1,14 +1,9 @@
 import { POST } from "~/app/api/fetchDocument/route";
-import { auth } from "@clerk/nextjs/server";
-import { validateRequestBody } from "~/lib/validation";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { db } from "~/server/db/index";
 
-jest.mock("@clerk/nextjs/server", () => ({
-  auth: jest.fn(),
-}));
-
-jest.mock("~/lib/validation", () => ({
-  validateRequestBody: jest.fn(),
+jest.mock("~/lib/auth/employer-employee", () => ({
+  getEmployerEmployeeUser: jest.fn(),
 }));
 
 jest.mock("~/server/db/index", () => ({
@@ -23,13 +18,11 @@ describe("POST /api/fetchDocument", () => {
   });
 
   it("should successfully fetch documents for authenticated user", async () => {
-    // Mock successful validation
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-123" },
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "test-user-123",
+      role: "employer",
+      companyId: 1,
     });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-123" });
 
     const mockDocuments = [
       { id: 1, name: "Document 1", companyId: 1, content: "Content 1" },
@@ -37,28 +30,17 @@ describe("POST /api/fetchDocument", () => {
       { id: 3, name: "Document 3", companyId: 1, content: "Content 3" },
     ];
 
-    // First call: user lookup
-    // Second call: documents lookup
-    const mockSelect = jest.fn()
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([
-            { userId: "test-user-123", role: "employer", companyId: 1 }
-          ]),
-        }),
-      })
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue(mockDocuments),
-        }),
-      });
-
+    const mockSelect = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(mockDocuments),
+      }),
+    });
     (db.select as jest.Mock) = mockSelect;
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-123" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);
@@ -70,33 +52,23 @@ describe("POST /api/fetchDocument", () => {
   });
 
   it("should return empty array if no documents exist for company", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-456" },
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "test-user-456",
+      role: "employer",
+      companyId: 2,
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-456" });
-
-    const mockSelect = jest.fn()
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([
-            { userId: "test-user-456", role: "employer", companyId: 2 }
-          ]),
-        }),
-      })
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([]), // No documents
-        }),
-      });
-
+    const mockSelect = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue([]),
+      }),
+    });
     (db.select as jest.Mock) = mockSelect;
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-456" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);
@@ -108,25 +80,12 @@ describe("POST /api/fetchDocument", () => {
   });
 
   it("should return 400 if user is not found", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "invalid-user-999" },
-    });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: "invalid-user-999" });
-
-    // Mock user lookup - return empty array (user not found)
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([]),
-      }),
-    });
-    (db.select as jest.Mock) = mockSelect;
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue(null);
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "invalid-user-999" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);
@@ -134,111 +93,26 @@ describe("POST /api/fetchDocument", () => {
 
     expect(response.status).toBe(400);
     expect(json.error).toBe("Invalid user.");
-  });
-
-  it("should return validation error if request body is invalid", async () => {
-    // Mock failed validation
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: false,
-      response: new Response(
-        JSON.stringify({ error: "userId is required" }),
-        { status: 400 }
-      ),
-    });
-
-    const request = new Request("http://localhost/api/fetchDocument", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}), // Missing userId
-    });
-
-    const response = await POST(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(json.error).toBe("userId is required");
-  });
-
-  it("should return validation error if userId is empty", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: false,
-      response: new Response(
-        JSON.stringify({ error: "userId cannot be empty" }),
-        { status: 400 }
-      ),
-    });
-
-    const request = new Request("http://localhost/api/fetchDocument", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "" }), // Empty userId
-    });
-
-    const response = await POST(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(json.error).toBe("userId cannot be empty");
-  });
-
-  it("should return 500 on database error during user lookup", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-123" },
-    });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-123" });
-
-    // Mock database error on user lookup
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockRejectedValue(new Error("Database connection failed")),
-      }),
-    });
-    (db.select as jest.Mock) = mockSelect;
-
-    const request = new Request("http://localhost/api/fetchDocument", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-123" }),
-    });
-
-    const response = await POST(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(json.error).toBe("Unable to fetch documents");
   });
 
   it("should return 500 on database error during documents fetch", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-123" },
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "test-user-123",
+      role: "employer",
+      companyId: 1,
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-123" });
-
-    // First call succeeds (user lookup), second call fails (documents fetch)
-    const mockSelect = jest.fn()
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([
-            { userId: "test-user-123", role: "employer", companyId: 1 }
-          ]),
-        }),
-      })
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockRejectedValue(new Error("Failed to fetch documents")),
-        }),
-      });
-
+    const mockSelect = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockRejectedValue(new Error("Failed to fetch documents")),
+      }),
+    });
     (db.select as jest.Mock) = mockSelect;
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-123" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);
@@ -248,113 +122,63 @@ describe("POST /api/fetchDocument", () => {
     expect(json.error).toBe("Unable to fetch documents");
   });
 
-  it("should return 400 if auth returns null userId", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-123" },
-    });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: null });
-
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([]),
-      }),
-    });
-    (db.select as jest.Mock) = mockSelect;
-
-    const request = new Request("http://localhost/api/fetchDocument", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-123" }),
-    });
-
-    const response = await POST(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(json.error).toBe("Invalid user.");
-  });
-
   it("should only return documents for the user's company", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-123" },
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "test-user-123",
+      role: "employer",
+      companyId: 1,
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-123" });
-
-    // Documents for company 1 only
     const mockDocuments = [
       { id: 1, name: "Company 1 Doc", companyId: 1 },
       { id: 2, name: "Another Company 1 Doc", companyId: 1 },
     ];
 
-    const mockSelect = jest.fn()
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([
-            { userId: "test-user-123", role: "employer", companyId: 1 }
-          ]),
-        }),
-      })
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue(mockDocuments),
-        }),
-      });
-
+    const mockSelect = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(mockDocuments),
+      }),
+    });
     (db.select as jest.Mock) = mockSelect;
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-123" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);
     const json = await response.json();
 
     expect(response.status).toBe(200);
-    // Verify all documents belong to companyId 1
-    json.forEach((doc: any) => {
+    json.forEach((doc: { companyId: number }) => {
       expect(doc.companyId).toBe(1);
     });
   });
 
   it("should handle user with different companyId", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "test-user-789" },
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "test-user-789",
+      role: "employee",
+      companyId: 5,
     });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-789" });
 
     const mockDocuments = [
       { id: 10, name: "Company 5 Doc", companyId: 5 },
       { id: 11, name: "Another Company 5 Doc", companyId: 5 },
     ];
 
-    const mockSelect = jest.fn()
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([
-            { userId: "test-user-789", role: "employee", companyId: 5 }
-          ]),
-        }),
-      })
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue(mockDocuments),
-        }),
-      });
-
+    const mockSelect = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(mockDocuments),
+      }),
+    });
     (db.select as jest.Mock) = mockSelect;
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "test-user-789" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);
@@ -362,43 +186,31 @@ describe("POST /api/fetchDocument", () => {
 
     expect(response.status).toBe(200);
     expect(json).toHaveLength(2);
-    json.forEach((doc: any) => {
+    json.forEach((doc: { companyId: number }) => {
       expect(doc.companyId).toBe(5);
     });
   });
 
   it("should work for any user role (no role restriction)", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { userId: "employee-user-111" },
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "employee-user-111",
+      role: "employee",
+      companyId: 3,
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "employee-user-111" });
+    const mockDocuments = [{ id: 20, name: "Employee Doc", companyId: 3 }];
 
-    const mockDocuments = [
-      { id: 20, name: "Employee Doc", companyId: 3 },
-    ];
-
-    const mockSelect = jest.fn()
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue([
-            { userId: "employee-user-111", role: "employee", companyId: 3 }
-          ]),
-        }),
-      })
-      .mockReturnValueOnce({
-        from: jest.fn().mockReturnValue({
-          where: jest.fn().mockResolvedValue(mockDocuments),
-        }),
-      });
-
+    const mockSelect = jest.fn().mockReturnValue({
+      from: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(mockDocuments),
+      }),
+    });
     (db.select as jest.Mock) = mockSelect;
 
     const request = new Request("http://localhost/api/fetchDocument", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: "employee-user-111" }),
+      body: JSON.stringify({}),
     });
 
     const response = await POST(request);

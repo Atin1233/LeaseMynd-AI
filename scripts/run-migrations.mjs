@@ -54,7 +54,10 @@ async function main() {
     ]);
   } catch (e) {
     const msg = e?.message ?? String(e);
-    if (msg.includes("CONNECT_TIMEOUT") || msg.includes("EHOSTUNREACH") || msg.includes("ECONNREFUSED")) {
+    const code = e?.code ?? "";
+    const skipCodes = ["CONNECT_TIMEOUT", "EHOSTUNREACH", "ECONNREFUSED", "ENOTFOUND"];
+    const shouldSkip = skipCodes.some((c) => msg.includes(c) || code === c);
+    if (shouldSkip) {
       console.log("⏭️  Database unreachable or timeout; skipping manual migrations. Run pnpm db:migrate:manual when DB is available.");
       await sql.end();
       process.exit(0);

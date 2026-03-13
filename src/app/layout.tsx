@@ -23,8 +23,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={dmSans.variable}>
-      <body className={`${dmSans.className} bg-stone-50 text-stone-900 antialiased min-h-screen`}>
+    <html lang="en" className={dmSans.variable} suppressHydrationWarning>
+      <body className={`${dmSans.className} bg-stone-50 text-stone-900 antialiased min-h-screen`} suppressHydrationWarning>
         {children}
         <Toaster />
         <Analytics />

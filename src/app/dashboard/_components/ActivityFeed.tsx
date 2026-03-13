@@ -108,7 +108,7 @@ export function ActivityFeed() {
           <Link
             key={activity.id}
             href={`/dashboard/lease/${activity.lease.id}`}
-            className="block px-6 py-4 hover:bg-stone-50 transition-colors"
+            className="block pl-6 pr-8 py-4 hover:bg-stone-50 transition-colors"
           >
             <div className="flex items-start gap-3">
               <div
@@ -133,7 +133,9 @@ export function ActivityFeed() {
                       {activity.type === "analysis"
                         ? "analyzed"
                         : "uploaded"}{" "}
-                      <span className="font-medium">{activity.lease.title}</span>
+                      <span className="font-medium break-all">
+                        {activity.lease.title}
+                      </span>
                     </p>
                     {activity.lease.address && (
                       <p className="text-xs text-stone-500 mt-0.5">

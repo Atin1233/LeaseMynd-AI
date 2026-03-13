@@ -1,10 +1,10 @@
 import { DELETE } from "~/app/api/Categories/DeleteCategories/route";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { validateRequestBody } from "~/lib/validation";
 import { db } from "~/server/db/index";
 
-jest.mock("@clerk/nextjs/server", () => ({
-  auth: jest.fn(),
+jest.mock("~/lib/auth/employer-employee", () => ({
+  getEmployerEmployeeUser: jest.fn(),
 }));
 
 jest.mock("~/lib/validation", () => ({
@@ -13,7 +13,6 @@ jest.mock("~/lib/validation", () => ({
 
 jest.mock("~/server/db/index", () => ({
   db: {
-    select: jest.fn(),
     delete: jest.fn(),
   },
 }));
@@ -26,31 +25,24 @@ describe("DELETE /api/Categories/DeleteCategory", () => {
   it("should allow an authenticated employer to delete a category", async () => {
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
-      data: { id: "123" },
+      data: { id: 123 },
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "employer-user-123" });
-
-    // Mock user lookup - return employer
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([
-          { userId: "employer-user-123", role: "employer", companyId: 1 }
-        ]),
-      }),
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "employer-user-123",
+      role: "employer",
+      companyId: 1,
     });
-    (db.select as jest.Mock) = mockSelect;
 
-    // Mock delete operation
     const mockDelete = jest.fn().mockReturnValue({
       where: jest.fn().mockResolvedValue(undefined),
     });
     (db.delete as jest.Mock) = mockDelete;
 
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
+    const request = new Request("http://localhost/api/Categories/DeleteCategories", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "123" }),
+      body: JSON.stringify({ id: 123 }),
     });
 
     const response = await DELETE(request);
@@ -64,30 +56,24 @@ describe("DELETE /api/Categories/DeleteCategory", () => {
   it("should allow an authenticated owner to delete a category", async () => {
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
-      data: { id: "456" },
+      data: { id: 456 },
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "owner-user-456" });
-
-    // Mock user lookup - return owner
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([
-          { userId: "owner-user-456", role: "owner", companyId: 2 }
-        ]),
-      }),
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "owner-user-456",
+      role: "owner",
+      companyId: 2,
     });
-    (db.select as jest.Mock) = mockSelect;
 
     const mockDelete = jest.fn().mockReturnValue({
       where: jest.fn().mockResolvedValue(undefined),
     });
     (db.delete as jest.Mock) = mockDelete;
 
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
+    const request = new Request("http://localhost/api/Categories/DeleteCategories", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "456" }),
+      body: JSON.stringify({ id: 456 }),
     });
 
     const response = await DELETE(request);
@@ -100,20 +86,12 @@ describe("DELETE /api/Categories/DeleteCategory", () => {
   it("should return 400 if user is not found", async () => {
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
-      data: { id: "123" },
+      data: { id: 123 },
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "invalid-user-999" });
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue(null);
 
-    // Mock user lookup - return empty array (user not found)
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([]),
-      }),
-    });
-    (db.select as jest.Mock) = mockSelect;
-
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
+    const request = new Request("http://localhost/api/Categories/DeleteCategories", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: "123" }),
@@ -123,31 +101,25 @@ describe("DELETE /api/Categories/DeleteCategory", () => {
     const json = await response.json();
 
     expect(response.status).toBe(400);
-    expect(json.error).toBe("Invalid user.");
+    expect(json.error).toBe("Invalid user role.");
   });
 
   it("should return 400 if user has invalid role (employee)", async () => {
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
-      data: { id: "123" },
+      data: { id: 123 },
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "employee-user-789" });
-
-    // Mock user lookup - return employee (invalid role)
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([
-          { userId: "employee-user-789", role: "employee", companyId: 3 }
-        ]),
-      }),
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "employee-user-789",
+      role: "employee",
+      companyId: 3,
     });
-    (db.select as jest.Mock) = mockSelect;
 
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
+    const request = new Request("http://localhost/api/Categories/DeleteCategories", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "123" }),
+      body: JSON.stringify({ id: 123 }),
     });
 
     const response = await DELETE(request);
@@ -189,7 +161,7 @@ describe("DELETE /api/Categories/DeleteCategory", () => {
       ),
     });
 
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
+    const request = new Request("http://localhost/api/Categories/DeleteCategories", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}), // No id field
@@ -205,89 +177,27 @@ describe("DELETE /api/Categories/DeleteCategory", () => {
   it("should return 500 on database error", async () => {
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
-      data: { id: "123" },
+      data: { id: 123 },
     });
 
-    (auth as jest.Mock).mockResolvedValue({ userId: "test-user-123" });
-
-    // Mock database error on select
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockRejectedValue(new Error("Database error")),
-      }),
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      userId: "test-user-123",
+      role: "employer",
+      companyId: 1,
     });
-    (db.select as jest.Mock) = mockSelect;
 
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
+    (db.delete as jest.Mock).mockReturnValue({
+      where: jest.fn().mockRejectedValue(new Error("Database error")),
+    });
+
+    const request = new Request("http://localhost/api/Categories/DeleteCategories", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "123" }),
+      body: JSON.stringify({ id: 123 }),
     });
 
     const response = await DELETE(request);
 
     expect(response.status).toBe(500);
-  });
-
-  it("should return 500 on delete operation error", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { id: "123" },
-    });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: "employer-user-123" });
-
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([
-          { userId: "employer-user-123", role: "employer", companyId: 1 }
-        ]),
-      }),
-    });
-    (db.select as jest.Mock) = mockSelect;
-
-    // Mock delete operation error
-    const mockDelete = jest.fn().mockReturnValue({
-      where: jest.fn().mockRejectedValue(new Error("Delete failed")),
-    });
-    (db.delete as jest.Mock) = mockDelete;
-
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "123" }),
-    });
-
-    const response = await DELETE(request);
-
-    expect(response.status).toBe(500);
-  });
-
-  it("should return 400 if auth returns null userId", async () => {
-    (validateRequestBody as jest.Mock).mockResolvedValue({
-      success: true,
-      data: { id: "123" },
-    });
-
-    (auth as jest.Mock).mockResolvedValue({ userId: null });
-
-    const mockSelect = jest.fn().mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockResolvedValue([]),
-      }),
-    });
-    (db.select as jest.Mock) = mockSelect;
-
-    const request = new Request("http://localhost/api/Categories/DeleteCategory", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: "123" }),
-    });
-
-    const response = await DELETE(request);
-    const json = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(json.error).toBe("Invalid user.");
   });
 });

@@ -53,11 +53,13 @@ jest.mock("@langchain/textsplitters", () => ({
 }));
 
 const mockEmbedDocuments = jest.fn();
-jest.mock("@langchain/openai", () => ({
-  OpenAIEmbeddings: jest.fn().mockImplementation(() => ({
+jest.mock("~/lib/ai", () => ({
+  createGoogleEmbeddings: jest.fn().mockImplementation(() => ({
     embedDocuments: (...args: unknown[]) => mockEmbedDocuments(...args),
   })),
 }));
+
+process.env.GOOGLE_AI_API_KEY = "test-key";
 
 describe("POST /api/uploadDocument", () => {
   beforeEach(() => {
@@ -70,7 +72,7 @@ describe("POST /api/uploadDocument", () => {
     mockFetch.mockReset();
     mockWriteFile.mockImplementation(async () => undefined);
     mockUnlink.mockImplementation(async () => undefined);
-    process.env.OPENAI_API_KEY = "test-key";
+    process.env.GOOGLE_AI_API_KEY = "test-key";
   });
 
   it("uploads and processes a document successfully", async () => {
@@ -105,7 +107,7 @@ describe("POST /api/uploadDocument", () => {
       { pageContent: "Chunk content", metadata: { loc: { pageNumber: 2 } } },
     ]);
 
-    mockEmbedDocuments.mockResolvedValue([[0.1, 0.2, 0.3]]);
+    mockEmbedDocuments.mockResolvedValue([Array(768).fill(0.1)]);
 
     const insertedDocument = {
       id: 42,
@@ -191,7 +193,7 @@ describe("POST /api/uploadDocument", () => {
       { pageContent: "Chunk B", metadata: { loc: { pageNumber: 2 } } },
     ]);
 
-    mockEmbedDocuments.mockResolvedValue([[0.1], [0.2]]);
+    mockEmbedDocuments.mockResolvedValue([Array(768).fill(0.1), Array(768).fill(0.2)]);
 
     const insertedDocument = {
       id: 77,
@@ -267,7 +269,7 @@ describe("POST /api/uploadDocument", () => {
       { pageContent: "Chunk content", metadata: { loc: { pageNumber: 1 } } },
     ]);
 
-    mockEmbedDocuments.mockResolvedValue([[0.1, 0.2]]);
+    mockEmbedDocuments.mockResolvedValue([Array(768).fill(0.1), Array(768).fill(0.2)]);
 
     (db.transaction as jest.Mock).mockImplementation(async () => {
       throw new Error("transaction failed");

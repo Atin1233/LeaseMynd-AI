@@ -4,6 +4,7 @@
  * Features:
  * - Token bucket algorithm for smooth rate limiting
  * - Support for different rate limit tiers (standard, premium, admin)
+ * - Per-user and per-IP rate limiting
  * - Automatic cleanup of expired entries
  * - Standard rate limit headers (X-RateLimit-*)
  * - Can be extended to use Redis for distributed rate limiting
@@ -30,6 +31,11 @@ export interface RateLimitConfig {
    * Optional: Skip rate limiting for certain requests
    */
   skip?: (request: Request) => boolean | Promise<boolean>;
+
+  /**
+   * Optional: Endpoint identifier for per-endpoint limits
+   */
+  endpoint?: string;
 }
 
 export interface RateLimitInfo {
@@ -269,7 +275,87 @@ export const RateLimitPresets = {
     maxRequests: 10,
     windowMs: 60 * 1000,
   },
+
+  /**
+   * Lease analysis rate limit: 5 analyses per 15 minutes
+   * For the most expensive AI operations
+   */
+  leaseAnalysis: {
+    maxRequests: 5,
+    windowMs: 15 * 60 * 1000,
+    endpoint: 'analyze-lease',
+  },
+
+  /**
+   * Upload rate limit: 10 uploads per 15 minutes
+   */
+  upload: {
+    maxRequests: 10,
+    windowMs: 15 * 60 * 1000,
+    endpoint: 'upload-lease',
+  },
+
+  /**
+   * Export rate limit: 20 exports per 15 minutes
+   */
+  export: {
+    maxRequests: 20,
+    windowMs: 15 * 60 * 1000,
+    endpoint: 'export-lease',
+  },
 } as const;
+
+/**
+ * Create a user-specific rate limiter
+ * Uses userId as the key instead of IP address
+ */
+export function createUserRateLimiter(userId: string, config: RateLimitConfig) {
+  return createRateLimiter({
+    ...config,
+    keyGenerator: () => `user:${userId}:${config.endpoint || 'default'}`,
+  });
+}
+
+/**
+ * Create an organization-specific rate limiter
+ * Uses organizationId as the key for team-wide limits
+ */
+export function createOrgRateLimiter(organizationId: string, config: RateLimitConfig) {
+  return createRateLimiter({
+    ...config,
+    keyGenerator: () => `org:${organizationId}:${config.endpoint || 'default'}`,
+  });
+}
+
+/**
+ * Get rate limit config based on subscription tier
+ */
+export function getRateLimitForTier(tier: 'free' | 'single' | 'team' | 'broker'): RateLimitConfig {
+  switch (tier) {
+    case 'free':
+      return {
+        maxRequests: 3, // 3 analyses per 15 minutes for free tier
+        windowMs: 15 * 60 * 1000,
+      };
+    case 'single':
+      return {
+        maxRequests: 10, // 10 analyses per 15 minutes
+        windowMs: 15 * 60 * 1000,
+      };
+    case 'team':
+      return {
+        maxRequests: 30, // 30 analyses per 15 minutes
+        windowMs: 15 * 60 * 1000,
+      };
+    case 'broker':
+      return {
+        maxRequests: 100, // 100 analyses per 15 minutes (essentially unlimited)
+        windowMs: 15 * 60 * 1000,
+      };
+    default:
+      return RateLimitPresets.strict;
+  }
+}
 
 /**
  * Clear all rate limit data (useful for testing)

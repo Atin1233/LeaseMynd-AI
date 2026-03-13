@@ -95,18 +95,11 @@ Get list of available voices from ElevenLabs.
 - Configurable voice settings (stability, similarity, style)
 - Fast model (`eleven_turbo_v2_5`) for low latency
 
-### Speech-to-Text
-- Uses browser's built-in Web Speech API
-- Real-time transcription
-- Supports continuous recognition
-- Automatic message sending when speech ends
-
 ## Usage in Components
 
 The `VoiceChat` component automatically:
-1. Records user speech using Web Speech API
-2. Sends transcribed text to the message handler
-3. Plays AI responses using ElevenLabs text-to-speech
+1. Plays AI responses using ElevenLabs text-to-speech
+2. Uses VAD to interrupt TTS when the user speaks (no speech-to-text; use typed input to send messages)
 
 ### Example Integration
 
@@ -126,20 +119,10 @@ function StudyBuddyPanel({ messages, onSendMessage }) {
 
 ## Browser Compatibility
 
-### Speech Recognition (Speech-to-Text)
-- Chrome/Edge: ✅ Full support
-- Safari: ✅ Full support (webkit prefix)
-- Firefox: ❌ Not supported
-
 ### Text-to-Speech
 - All modern browsers: ✅ Supported via API
 
 ## Troubleshooting
-
-### Microphone Not Working
-- Ensure browser permissions are granted
-- Check browser console for errors
-- Verify HTTPS (required for microphone access)
 
 ### Audio Not Playing
 - Check browser audio permissions

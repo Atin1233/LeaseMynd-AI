@@ -8,19 +8,13 @@ jest.mock("p-limit", () => ({
     default: () => (fn: () => Promise<unknown>) => fn(),
 }));
 
-jest.mock("@langchain/openai", () => {
-    const MockChatOpenAI = class {
-        withStructuredOutput() {
-            return {
-                invoke: mockStructuredInvoke,
-            };
-        }
-    };
-    return {
-        __esModule: true,
-        ChatOpenAI: MockChatOpenAI,
-    };
-});
+jest.mock("~/lib/ai", () => ({
+    createChatModel: () => ({
+        withStructuredOutput: () => ({
+            invoke: mockStructuredInvoke,
+        }),
+    }),
+}));
 
 import * as AnalysisEngine from "~/app/api/predictive-document-analysis/services/analysisEngine";
 import { createChunkBatches } from "~/app/api/predictive-document-analysis/utils/batching";
@@ -52,7 +46,7 @@ describe("predictive analysis batching", () => {
         expect(batches[2]).toHaveLength(1);
     });
 
-    it("caps OpenAI round trips for large documents", async () => {
+    it("caps AI round trips for large documents", async () => {
         const chunks: PdfChunk[] = Array.from({ length: 120 }, (_, index) => ({
             id: index + 1,
             page: index + 1,

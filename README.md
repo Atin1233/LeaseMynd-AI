@@ -367,7 +367,7 @@ const response = await fetch('/api/LangChain', {
 ## 🛠 Tech Stack
 
 - **Framework**: [Next.js 15](https://nextjs.org/) with TypeScript
-- **Authentication**: [Clerk](https://clerk.com/)
+- **Authentication**: [Supabase Auth](https://supabase.com/)
 - **Database**: PostgreSQL with [Drizzle ORM](https://orm.drizzle.team/)
 - **AI Integration**: [OpenAI](https://openai.com/) + [LangChain](https://langchain.com/)
 - **OCR Processing**: [Datalab Marker API](https://www.datalab.to/) (optional)
@@ -410,17 +410,10 @@ Create a `.env` file in the root directory with the following variables:
 # For production: Use your production PostgreSQL connection string
 DATABASE_URL="postgresql://postgres:password@localhost:5432/pdr_ai_v2"
 
-# Clerk Authentication (get from https://clerk.com/)
+# Supabase Authentication (get from https://supabase.com/)
 # Required for user authentication and authorization
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-CLERK_SECRET_KEY=your_clerk_secret_key
-
-# Clerk Force Redirect URLs (Optional - for custom redirect after authentication)
-# These URLs control where users are redirected after sign in/up/sign out
-# If not set, Clerk will use default redirect behavior
-NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=https://your-domain.com/employer/home
-NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=https://your-domain.com/signup
-NEXT_PUBLIC_CLERK_SIGN_OUT_FORCE_REDIRECT_URL=https://your-domain.com/
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # OpenAI API (get from https://platform.openai.com/)
 # Required for AI features: document analysis, embeddings, chat functionality
@@ -488,11 +481,11 @@ pnpm db:push
 
 ### 5. Set Up External Services
 
-#### Clerk Authentication
-1. Create account at [Clerk](https://clerk.com/)
-2. Create a new application
-3. Copy the publishable and secret keys to your `.env` file
-4. Configure sign-in/sign-up methods as needed
+#### Supabase Authentication
+1. Create account at [Supabase](https://supabase.com/)
+2. Create a new project
+3. Copy the project URL and anon key from Project Settings → API to your `.env` file
+4. Configure sign-in/sign-up methods (email, Google, etc.) in Authentication → Providers
 
 #### OpenAI API
 1. Create account at [OpenAI](https://platform.openai.com/)
@@ -613,8 +606,8 @@ Vercel is the recommended platform for Next.js applications:
    **Add Other Environment Variables:**
    - In Vercel dashboard, go to Settings → Environment Variables
    - Add all required environment variables:
-     - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
-     - `CLERK_SECRET_KEY`
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
      - `OPENAI_API_KEY`
      - `UPLOADTHING_SECRET`
      - `UPLOADTHING_APP_ID`
@@ -623,9 +616,6 @@ Vercel is the recommended platform for Next.js applications:
      - `LANGCHAIN_API_KEY` (optional, required if `LANGCHAIN_TRACING_V2=true`)
      - `TAVILY_API_KEY` (optional, for enhanced web search)
      - `DATALAB_API_KEY` (optional, for OCR processing)
-     - `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL` (optional)
-     - `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL` (optional)
-     - `NEXT_PUBLIC_CLERK_SIGN_OUT_FORCE_REDIRECT_URL` (optional)
 
 4. **Configure build settings**
    - Build Command: `pnpm build`
@@ -658,9 +648,8 @@ Vercel is the recommended platform for Next.js applications:
      DATABASE_URL="your_production_db_url" pnpm db:studio
      ```
 
-3. **Set up Clerk webhooks** (if needed)
-   - Configure webhook URL in Clerk dashboard
-   - URL format: `https://your-domain.com/api/webhooks/clerk`
+3. **Configure Supabase Auth**
+   - Set up redirect URLs in Supabase dashboard (Authentication → URL Configuration)
 
 4. **Configure UploadThing**
    - Add your production domain to UploadThing allowed origins
@@ -894,11 +883,8 @@ Key directories:
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
 | `DATABASE_URL` | PostgreSQL connection string. Format: `postgresql://user:password@host:port/database` | ✅ | `postgresql://postgres:password@localhost:5432/pdr_ai_v2` |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (client-side). Get from [Clerk Dashboard](https://clerk.com/) | ✅ | `pk_test_...` |
-| `CLERK_SECRET_KEY` | Clerk secret key (server-side). Get from [Clerk Dashboard](https://clerk.com/) | ✅ | `sk_test_...` |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL` | Force redirect URL after sign in. If not set, uses Clerk default. | ✅ | `https://your-domain.com/employer/home` |
-| `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL` | Force redirect URL after sign up. If not set, uses Clerk default. | ✅ | `https://your-domain.com/signup` |
-| `NEXT_PUBLIC_CLERK_SIGN_OUT_FORCE_REDIRECT_URL` | Force redirect URL after sign out. If not set, uses Clerk default. | ✅ | `https://your-domain.com/` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL. Get from [Supabase Dashboard](https://supabase.com/) → Project Settings → API | ✅ | `https://xxx.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anonymous key (client-side). Get from [Supabase Dashboard](https://supabase.com/) → Project Settings → API | ✅ | `eyJ...` |
 | `OPENAI_API_KEY` | OpenAI API key for AI features (embeddings, chat, document analysis). Get from [OpenAI Platform](https://platform.openai.com/) | ✅ | `sk-...` |
 | `LANGCHAIN_TRACING_V2` | Enable LangSmith tracing for LangChain operations. Set to `true` to enable. Get API key from [LangSmith](https://smith.langchain.com/) | ❌ | `true` or `false` |
 | `LANGCHAIN_API_KEY` | LangChain API key for LangSmith tracing and monitoring. Required if `LANGCHAIN_TRACING_V2=true`. Get from [LangSmith](https://smith.langchain.com/) | ❌ | `lsv2_...` |
@@ -913,8 +899,7 @@ Key directories:
 
 ### Environment Variables by Feature
 
-- **Authentication**: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
-- **Authentication Redirects**: `NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_OUT_FORCE_REDIRECT_URL`
+- **Authentication**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - **Database**: `DATABASE_URL`
 - **AI Features**: `OPENAI_API_KEY` (used for embeddings, chat, and document analysis)
 - **AI Observability**: `LANGCHAIN_TRACING_V2`, `LANGCHAIN_API_KEY` (for LangSmith tracing and monitoring)

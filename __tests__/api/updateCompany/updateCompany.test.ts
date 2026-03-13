@@ -1,10 +1,10 @@
 import { POST } from "~/app/api/updateCompany/route";
-import { auth } from "@clerk/nextjs/server";
+import { getEmployerEmployeeUser } from "~/lib/auth/employer-employee";
 import { validateRequestBody } from "~/lib/validation";
 import { db } from "~/server/db/index";
 
-jest.mock("@clerk/nextjs/server", () => ({
-  auth: jest.fn(),
+jest.mock("~/lib/auth/employer-employee", () => ({
+  getEmployerEmployeeUser: jest.fn(),
 }));
 
 jest.mock("~/lib/validation", () => {
@@ -17,7 +17,6 @@ jest.mock("~/lib/validation", () => {
 
 jest.mock("~/server/db/index", () => ({
   db: {
-    select: jest.fn(),
     update: jest.fn(),
   },
 }));
@@ -35,7 +34,12 @@ describe("POST /api/updateCompany", () => {
   });
 
   it("updates company settings for authorized employer", async () => {
-    (auth as jest.Mock).mockResolvedValue({ userId: "user-123" });
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      id: 1,
+      companyId: 7,
+      role: "employer",
+    });
+
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
       data: {
@@ -46,18 +50,17 @@ describe("POST /api/updateCompany", () => {
       },
     });
 
-    const mockWhereSelect = jest.fn().mockResolvedValue([
-      { id: 1, companyId: "7", role: "employer" },
-    ]);
-    const mockFrom = jest.fn().mockReturnValue({ where: mockWhereSelect });
-    (db.select as jest.Mock).mockReturnValue({ from: mockFrom });
-
     const mockReturning = jest.fn().mockResolvedValue([{ id: 7 }]);
     const mockWhereUpdate = jest.fn().mockReturnValue({ returning: mockReturning });
     const mockSet = jest.fn().mockReturnValue({ where: mockWhereUpdate });
     (db.update as jest.Mock).mockReturnValue({ set: mockSet });
 
-    const response = await POST(makeRequest({}));
+    const response = await POST(makeRequest({
+      name: "Acme Corp",
+      employerPasskey: "EMP123",
+      employeePasskey: "EMP456",
+      numberOfEmployees: "25",
+    }));
     const json = await response.json();
 
     expect(response.status).toBe(200);
@@ -75,9 +78,23 @@ describe("POST /api/updateCompany", () => {
   });
 
   it("returns 401 when user is not authenticated", async () => {
-    (auth as jest.Mock).mockResolvedValue({ userId: null });
+    (validateRequestBody as jest.Mock).mockResolvedValue({
+      success: true,
+      data: {
+        name: "Acme",
+        employerPasskey: "EMP",
+        employeePasskey: "EMP2",
+        numberOfEmployees: "10",
+      },
+    });
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue(null);
 
-    const response = await POST(makeRequest({}));
+    const response = await POST(makeRequest({
+      name: "Acme",
+      employerPasskey: "EMP",
+      employeePasskey: "EMP2",
+      numberOfEmployees: "10",
+    }));
     const json = await response.json();
 
     expect(response.status).toBe(401);
@@ -85,11 +102,15 @@ describe("POST /api/updateCompany", () => {
       success: false,
       message: "Unauthorized",
     });
-    expect(validateRequestBody).not.toHaveBeenCalled();
   });
 
   it("returns 403 when user lacks employer privileges", async () => {
-    (auth as jest.Mock).mockResolvedValue({ userId: "user-123" });
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      id: 1,
+      companyId: 7,
+      role: "employee",
+    });
+
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
       data: {
@@ -100,13 +121,12 @@ describe("POST /api/updateCompany", () => {
       },
     });
 
-    const mockWhereSelect = jest.fn().mockResolvedValue([
-      { id: 1, companyId: "7", role: "employee" },
-    ]);
-    const mockFrom = jest.fn().mockReturnValue({ where: mockWhereSelect });
-    (db.select as jest.Mock).mockReturnValue({ from: mockFrom });
-
-    const response = await POST(makeRequest({}));
+    const response = await POST(makeRequest({
+      name: "Acme Corp",
+      employerPasskey: "EMP123",
+      employeePasskey: "EMP456",
+      numberOfEmployees: "10",
+    }));
     const json = await response.json();
 
     expect(response.status).toBe(403);
@@ -118,7 +138,11 @@ describe("POST /api/updateCompany", () => {
   });
 
   it("bubbles validation failure response", async () => {
-    (auth as jest.Mock).mockResolvedValue({ userId: "user-123" });
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      id: 1,
+      companyId: 7,
+      role: "employer",
+    });
 
     const validationResponse = new Response(
       JSON.stringify({ success: false, message: "Invalid payload" }),
@@ -135,11 +159,15 @@ describe("POST /api/updateCompany", () => {
 
     expect(response.status).toBe(400);
     expect(json).toEqual({ success: false, message: "Invalid payload" });
-    expect(db.select).not.toHaveBeenCalled();
   });
 
   it("returns 404 when company record is missing", async () => {
-    (auth as jest.Mock).mockResolvedValue({ userId: "user-123" });
+    (getEmployerEmployeeUser as jest.Mock).mockResolvedValue({
+      id: 1,
+      companyId: 7,
+      role: "owner",
+    });
+
     (validateRequestBody as jest.Mock).mockResolvedValue({
       success: true,
       data: {
@@ -150,18 +178,17 @@ describe("POST /api/updateCompany", () => {
       },
     });
 
-    const mockWhereSelect = jest.fn().mockResolvedValue([
-      { id: 1, companyId: "7", role: "owner" },
-    ]);
-    const mockFrom = jest.fn().mockReturnValue({ where: mockWhereSelect });
-    (db.select as jest.Mock).mockReturnValue({ from: mockFrom });
-
     const mockReturning = jest.fn().mockResolvedValue([]);
     const mockWhereUpdate = jest.fn().mockReturnValue({ returning: mockReturning });
     const mockSet = jest.fn().mockReturnValue({ where: mockWhereUpdate });
     (db.update as jest.Mock).mockReturnValue({ set: mockSet });
 
-    const response = await POST(makeRequest({}));
+    const response = await POST(makeRequest({
+      name: "Acme Corp",
+      employerPasskey: "EMP123",
+      employeePasskey: "EMP456",
+      numberOfEmployees: "15",
+    }));
     const json = await response.json();
 
     expect(response.status).toBe(404);

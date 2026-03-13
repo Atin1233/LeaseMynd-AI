@@ -1,9 +1,9 @@
 import { POST as addChatHistory } from "~/app/api/Questions/add/route";
 import { POST as fetchChatHistory } from "~/app/api/Questions/fetch/route";
 
-const mockAuth = jest.fn();
-jest.mock("@clerk/nextjs/server", () => ({
-    auth: (...args: unknown[]) => mockAuth(...args),
+const mockGetEmployerEmployeeUser = jest.fn();
+jest.mock("~/lib/auth/employer-employee", () => ({
+    getEmployerEmployeeUser: (...args: unknown[]) => mockGetEmployerEmployeeUser(...args),
 }));
 
 const mockSelect = jest.fn();
@@ -43,7 +43,7 @@ describe("Chat history routes", () => {
             });
 
         it("rejects unauthenticated requests", async () => {
-            mockAuth.mockResolvedValue({ userId: null });
+            mockGetEmployerEmployeeUser.mockResolvedValue(null);
 
             const response = await addChatHistory(
                 buildRequest({
@@ -59,14 +59,10 @@ describe("Chat history routes", () => {
         });
 
         it("prevents writing to documents outside the user's company", async () => {
-            mockAuth.mockResolvedValue({ userId: "user-1" });
-            mockSelect
-                .mockImplementationOnce(() =>
-                    createLimitedSelect([{ userId: "user-1", companyId: "10" }]),
-                )
-                .mockImplementationOnce(() =>
-                    createLimitedSelect([{ id: 5, companyId: "20", title: "Doc" }]),
-                );
+            mockGetEmployerEmployeeUser.mockResolvedValue({ userId: "user-1", companyId: "10" });
+            mockSelect.mockImplementationOnce(() =>
+                createLimitedSelect([{ id: 5, companyId: "20", title: "Doc" }]),
+            );
 
             const response = await addChatHistory(
                 buildRequest({
@@ -81,14 +77,10 @@ describe("Chat history routes", () => {
         });
 
         it("stores chat history when user and document are valid", async () => {
-            mockAuth.mockResolvedValue({ userId: "user-1" });
-            mockSelect
-                .mockImplementationOnce(() =>
-                    createLimitedSelect([{ userId: "user-1", companyId: "10" }]),
-                )
-                .mockImplementationOnce(() =>
-                    createLimitedSelect([{ id: 7, companyId: "10", title: "Actual Title" }]),
-                );
+            mockGetEmployerEmployeeUser.mockResolvedValue({ userId: "user-1", companyId: "10" });
+            mockSelect.mockImplementationOnce(() =>
+                createLimitedSelect([{ id: 7, companyId: "10", title: "Actual Title" }]),
+            );
 
             const insertValues = jest.fn().mockResolvedValue(undefined);
             mockInsert.mockReturnValueOnce({ values: insertValues });
@@ -124,7 +116,7 @@ describe("Chat history routes", () => {
             });
 
         it("rejects unauthenticated requests", async () => {
-            mockAuth.mockResolvedValue({ userId: null });
+            mockGetEmployerEmployeeUser.mockResolvedValue(null);
 
             const response = await fetchChatHistory(
                 buildRequest({
@@ -136,11 +128,8 @@ describe("Chat history routes", () => {
         });
 
         it("returns chat history for valid users and documents", async () => {
-            mockAuth.mockResolvedValue({ userId: "user-1" });
+            mockGetEmployerEmployeeUser.mockResolvedValue({ userId: "user-1", companyId: "10" });
             mockSelect
-                .mockImplementationOnce(() =>
-                    createLimitedSelect([{ userId: "user-1", companyId: "10" }]),
-                )
                 .mockImplementationOnce(() =>
                     createLimitedSelect([{ id: 9, companyId: "10" }]),
                 )

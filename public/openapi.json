@@ -1,0 +1,249 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LeaseAI REST API",
+    "description": "REST API for LeaseAI - AI-powered commercial lease analysis. Use session cookies or API keys (Bearer token) for authentication.",
+    "version": "1.0.0",
+    "contact": { "name": "LeaseAI Support" }
+  },
+  "servers": [{ "url": "/api", "description": "App-relative API base" }],
+  "security": [{ "bearerAuth": [] }],
+  "tags": [
+    { "name": "Leases", "description": "Upload and manage leases" },
+    { "name": "Analysis", "description": "AI analysis and Q&A" },
+    { "name": "Portfolio", "description": "Portfolio view and export" },
+    { "name": "Sharing", "description": "Share links and client portal" },
+    { "name": "Templates", "description": "Lease templates" }
+  ],
+  "paths": {
+    "/upload-lease": {
+      "post": {
+        "tags": ["Leases"],
+        "summary": "Upload single lease",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "title"],
+                "properties": {
+                  "file": { "type": "string", "format": "binary" },
+                  "title": { "type": "string" },
+                  "propertyAddress": { "type": "string" },
+                  "propertyType": { "type": "string", "enum": ["office", "retail", "industrial", "warehouse", "medical", "mixed", "other"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Lease created", "content": { "application/json": { "schema": { "type": "object", "properties": { "leaseId": { "type": "string" } } } } },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/upload-lease/batch": {
+      "post": {
+        "tags": ["Leases"],
+        "summary": "Upload batch of leases (up to 50)",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["files", "titles"],
+                "properties": {
+                  "files": { "type": "array", "items": { "type": "string", "format": "binary" } },
+                  "titles": { "type": "array", "items": { "type": "string" } },
+                  "dueDiligence": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Leases created" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/analyze-lease": {
+      "post": {
+        "tags": ["Analysis"],
+        "summary": "Trigger AI analysis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["leaseId"],
+                "properties": {
+                  "leaseId": { "type": "string", "format": "uuid" },
+                  "useAdvancedModel": { "type": "boolean", "default": false },
+                  "forceReanalyze": { "type": "boolean", "default": false }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Analysis result or in-progress" },
+          "404": { "description": "Lease not found" },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "get": {
+        "tags": ["Analysis"],
+        "summary": "Get analysis status/result",
+        "parameters": [{ "name": "leaseId", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Analysis data" },
+          "404": { "description": "Not found" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/compare-clauses": {
+      "post": {
+        "tags": ["Analysis"],
+        "summary": "Compare lease clauses to standard template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["leaseId"],
+                "properties": {
+                  "leaseId": { "type": "string", "format": "uuid" },
+                  "templateId": { "type": "string", "format": "uuid" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "comparisons array" },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/lease-qa": {
+      "post": {
+        "tags": ["Analysis"],
+        "summary": "Natural language Q&A over a lease",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["leaseId", "question"],
+                "properties": {
+                  "leaseId": { "type": "string", "format": "uuid" },
+                  "question": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Answer", "content": { "application/json": { "schema": { "type": "object", "properties": { "answer": { "type": "string" } } } } },
+          "400": { "description": "Bad request" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/portfolio": {
+      "get": {
+        "tags": ["Portfolio"],
+        "summary": "List leases with risk summary",
+        "parameters": [{ "name": "dueDiligence", "in": "query", "schema": { "type": "boolean" } }],
+        "responses": {
+          "200": { "description": "leases, summary" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/export-portfolio": {
+      "get": {
+        "tags": ["Portfolio"],
+        "summary": "Export portfolio as CSV or Excel",
+        "parameters": [{ "name": "format", "in": "query", "schema": { "type": "string", "enum": ["csv", "xlsx"] } }],
+        "responses": {
+          "200": { "description": "File download" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/share-links": {
+      "get": {
+        "tags": ["Sharing"],
+        "summary": "List share links for a lease",
+        "parameters": [{ "name": "leaseId", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Share links" }, "401": { "description": "Unauthorized" } }
+      },
+      "post": {
+        "tags": ["Sharing"],
+        "summary": "Create share link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["leaseId"],
+                "properties": {
+                  "leaseId": { "type": "string" },
+                  "password": { "type": "string" },
+                  "expiresAt": { "type": "string", "format": "date-time" },
+                  "label": { "type": "string" },
+                  "allowComments": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Share link created" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/templates": {
+      "get": {
+        "tags": ["Templates"],
+        "summary": "List templates (pre-built + custom)",
+        "responses": { "200": { "description": "templates array" }, "401": { "description": "Unauthorized" } }
+      },
+      "post": {
+        "tags": ["Templates"],
+        "summary": "Create custom template",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "content_json": { "type": "object" },
+                  "shared_with_org": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Template created" }, "401": { "description": "Unauthorized" } }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Supabase access token or API key (lai_...)"
+      }
+    }
+  }
+}

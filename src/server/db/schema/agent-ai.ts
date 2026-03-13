@@ -167,7 +167,7 @@ export const agentAiChatbotMemory = pgTable(
         key: varchar("key", { length: 256 }).notNull(),
         value: jsonb("value").notNull(),
         importance: integer("importance").notNull().default(5),
-        embedding: pgVector({ dimension: 1536 })("embedding"),
+        embedding: pgVector({ dimension: 768 })("embedding"),
         createdAt: timestamp("created_at", { withTimezone: true })
             .default(sql`CURRENT_TIMESTAMP`)
             .notNull(),

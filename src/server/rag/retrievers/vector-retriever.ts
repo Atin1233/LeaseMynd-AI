@@ -85,11 +85,11 @@ export class VectorRetriever extends BaseRetriever {
             c.page,
             c.document_id,
             d.title as document_title,
-            c.embedding <-> ${bracketedEmbedding}::vector(1536) AS distance
+            c.embedding <-> ${bracketedEmbedding}::vector(768) AS distance
           FROM pdr_ai_v2_pdf_chunks c
           JOIN pdr_ai_v2_document d ON c.document_id = d.id 
           WHERE c.document_id = ${this.documentId}
-          ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(1536)
+          ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(768)
           LIMIT ${this.topK}
         `;
       } else if (this.searchScope === "company" && this.companyId !== undefined) {
@@ -100,11 +100,11 @@ export class VectorRetriever extends BaseRetriever {
             c.page,
             c.document_id,
             d.title as document_title,
-            c.embedding <-> ${bracketedEmbedding}::vector(1536) AS distance
+            c.embedding <-> ${bracketedEmbedding}::vector(768) AS distance
           FROM pdr_ai_v2_pdf_chunks c
           JOIN pdr_ai_v2_document d ON c.document_id = d.id 
           WHERE d.company_id = ${this.companyId.toString()}
-          ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(1536)
+          ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(768)
           LIMIT ${this.topK}
         `;
       } else if (this.searchScope === "multi-document" && this.documentIds?.length) {
@@ -116,11 +116,11 @@ export class VectorRetriever extends BaseRetriever {
             c.page,
             c.document_id,
             d.title as document_title,
-            c.embedding <-> ${bracketedEmbedding}::vector(1536) AS distance
+            c.embedding <-> ${bracketedEmbedding}::vector(768) AS distance
           FROM pdr_ai_v2_pdf_chunks c
           JOIN pdr_ai_v2_document d ON c.document_id = d.id 
           WHERE c.document_id = ANY(${docIdsArray}::int[])
-          ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(1536)
+          ORDER BY c.embedding <-> ${bracketedEmbedding}::vector(768)
           LIMIT ${this.topK}
         `;
       } else {
