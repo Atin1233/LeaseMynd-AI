@@ -5,7 +5,7 @@ import { aiAssistanceFeatures } from "~/data/landing/aiAssistance";
 import SectionTitle from "./SectionTitle";
 
 const AIAssistance: React.FC = () => {
-  const feature = aiAssistanceFeatures[0];
+  const feature = aiAssistanceFeatures[0]!;
 
   return (
     <div>
