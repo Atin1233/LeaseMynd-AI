@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   Header,
   Hero,
@@ -14,6 +17,16 @@ import AIAssistance from "~/components/landing/AIAssistance";
 import Container from "~/components/landing/Container";
 
 const LandingPage = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-white" />;
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Purple gradient background - visible throughout */}
