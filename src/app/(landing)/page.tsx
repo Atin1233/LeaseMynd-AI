@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import {
   Header,
   Hero,
@@ -12,21 +13,28 @@ import {
   CTA,
   Footer,
 } from "~/components/landing";
-import HowItWorks from "~/components/landing/HowItWorks";
-import AIAssistance from "~/components/landing/AIAssistance";
 import Container from "~/components/landing/Container";
 
+// Dynamically import components that might cause hydration issues
+const HowItWorks = dynamic(() => import("~/components/landing/HowItWorks"), {
+  ssr: false,
+});
+const AIAssistance = dynamic(() => import("~/components/landing/AIAssistance"), {
+  ssr: false,
+});
+
+const LoadingFallback = () => (
+  <div className="py-16 md:py-24">
+    <Container>
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 bg-slate-200 rounded w-1/3 mx-auto" />
+        <div className="h-4 bg-slate-200 rounded w-2/3 mx-auto" />
+      </div>
+    </Container>
+  </div>
+);
+
 const LandingPage = () => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="min-h-screen bg-white" />;
-  }
-
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Purple gradient background - visible throughout */}
@@ -49,12 +57,14 @@ const LandingPage = () => {
         </Container>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-16 md:py-24">
-        <Container>
-          <HowItWorks />
-        </Container>
-      </section>
+      {/* How It Works - Client side only */}
+      <Suspense fallback={<LoadingFallback />}>
+        <section id="how-it-works" className="py-16 md:py-24">
+          <Container>
+            <HowItWorks />
+          </Container>
+        </section>
+      </Suspense>
 
       {/* Benefits Sections */}
       <section id="features" className="py-16 md:py-24 bg-white/10 backdrop-blur-sm">
@@ -63,12 +73,14 @@ const LandingPage = () => {
         </Container>
       </section>
 
-      {/* AI Assistance Section */}
-      <section id="ai-assistance" className="py-16 md:py-24">
-        <Container>
-          <AIAssistance />
-        </Container>
-      </section>
+      {/* AI Assistance - Client side only */}
+      <Suspense fallback={<LoadingFallback />}>
+        <section id="ai-assistance" className="py-16 md:py-24">
+          <Container>
+            <AIAssistance />
+          </Container>
+        </section>
+      </Suspense>
 
       {/* Testimonials */}
       <section id="testimonials" className="py-16 md:py-24 bg-white/10 backdrop-blur-sm">

@@ -85,7 +85,13 @@ export async function POST(request: Request) {
     let passwordHash: string | null = null;
     if (password && typeof password === "string" && password.trim()) {
       const { createHash } = await import("crypto");
-      const secret = process.env.SHARE_LINK_SECRET ?? "leaseai-share-secret";
+      const secret = process.env.SHARE_LINK_SECRET;
+      if (!secret) {
+        return NextResponse.json(
+          { error: "Server misconfiguration: SHARE_LINK_SECRET not set" },
+          { status: 500 }
+        );
+      }
       passwordHash = createHash("sha256")
         .update(password.trim() + secret)
         .digest("hex");
