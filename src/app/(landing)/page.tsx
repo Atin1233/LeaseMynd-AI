@@ -1,6 +1,3 @@
-"use client";
-
-import React from "react";
 import {
   Header,
   Hero,
@@ -16,7 +13,7 @@ import HowItWorks from "~/components/landing/HowItWorks";
 import AIAssistance from "~/components/landing/AIAssistance";
 import Container from "~/components/landing/Container";
 
-const LandingPage: React.FC = () => {
+const LandingPage = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Purple gradient background - visible throughout */}
