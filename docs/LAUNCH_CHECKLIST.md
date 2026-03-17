@@ -1,4 +1,4 @@
-# LeaseAI Production Launch Checklist
+# LeaseMynd Production Launch Checklist
 
 **Last Updated:** February 2025  
 **Purpose:** Pre-launch verification for production deployment
@@ -16,7 +16,7 @@
 
 ### Optional (recommended for production)
 
-- [ ] `NEXT_PUBLIC_APP_URL` – Production app URL (e.g. `https://app.leaseai.com`)
+- [ ] `NEXT_PUBLIC_APP_URL` – Production app URL (e.g. `https://leasemynd.com`)
 - [ ] `SENTRY_DSN` – Error tracking (Sentry)
 - [ ] `NEXT_PUBLIC_POSTHOG_KEY` – Product analytics (PostHog)
 - [ ] `UPSTASH_REDIS_REST_URL` – Caching (Upstash Redis)

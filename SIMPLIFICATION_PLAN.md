@@ -1,5 +1,5 @@
 # Codebase Simplification Plan
-## LeaseAI / PDR AI v2 - Comprehensive Refactoring Strategy
+## LeaseMynd - Comprehensive Refactoring Strategy
 
 **Date:** January 26, 2026  
 **Goal:** Eliminate unnecessary complexity, remove duplicate code, consolidate overlapping functionality, and ensure all features work properly with a clean, maintainable architecture.

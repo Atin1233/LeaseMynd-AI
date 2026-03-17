@@ -13,7 +13,8 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "LeaseAI - AI-Powered Commercial Lease Analysis",
+  metadataBase: new URL("https://leasemynd.com"),
+  title: "LeaseMynd – AI-Powered Commercial Lease Analysis",
   description:
     "Analyze commercial leases in minutes with AI. Get risk scoring, clause-by-clause analysis, and actionable recommendations.",
   icons: [{ rel: "icon", url: "favicon.ico" }],

@@ -1,4 +1,4 @@
-# LeaseAI PRD Gap Analysis
+# LeaseMynd PRD Gap Analysis
 
 **Last Updated:** February 2025  
 **Source:** LeaseAI_Final_PRD.md  

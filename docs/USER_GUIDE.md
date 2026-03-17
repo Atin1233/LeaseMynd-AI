@@ -1,4 +1,4 @@
-# LeaseAI User Guide
+# LeaseMynd User Guide
 
 ## Getting Started
 

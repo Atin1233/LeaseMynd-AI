@@ -36,7 +36,7 @@ class UploadError extends Error {
     }
 }
 
-const TEMP_FILE_PREFIX = "pdr-ai-upload-";
+const TEMP_FILE_PREFIX = "leasemynd-upload-";
 const DATALAB_API_KEY = process.env.DATALAB_API_KEY ?? undefined;
 
 export async function POST(request: Request) {

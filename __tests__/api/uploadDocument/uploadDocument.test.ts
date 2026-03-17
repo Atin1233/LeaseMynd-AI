@@ -155,7 +155,7 @@ describe("POST /api/uploadDocument", () => {
     });
     expect(mockWriteFile).toHaveBeenCalledTimes(1);
     expect(mockUnlink).toHaveBeenCalledTimes(1);
-    expect(mockUnlink.mock.calls[0][0]).toContain("pdr-ai-upload-");
+    expect(mockUnlink.mock.calls[0][0]).toContain("leasemynd-upload-");
     expect(db.transaction).toHaveBeenCalledTimes(1);
   });
 
@@ -286,7 +286,7 @@ describe("POST /api/uploadDocument", () => {
 
     expect(response.status).toBe(500);
     expect(mockUnlink).toHaveBeenCalledTimes(1);
-    expect(mockUnlink.mock.calls[0][0]).toContain("pdr-ai-upload-");
+    expect(mockUnlink.mock.calls[0][0]).toContain("leasemynd-upload-");
   });
 
   it("returns validation response when request body is invalid", async () => {

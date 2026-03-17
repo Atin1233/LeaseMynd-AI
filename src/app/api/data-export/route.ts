@@ -34,7 +34,7 @@ export async function GET() {
       };
       return NextResponse.json(bundle, {
         headers: {
-          "Content-Disposition": `attachment; filename="leaseai-data-export-${new Date().toISOString().slice(0, 10)}.json"`,
+          "Content-Disposition": `attachment; filename="leasemynd-data-export-${new Date().toISOString().slice(0, 10)}.json"`,
         },
       });
     }
@@ -74,7 +74,7 @@ export async function GET() {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Content-Disposition": `attachment; filename="leaseai-data-export-${new Date().toISOString().slice(0, 10)}.json"`,
+        "Content-Disposition": `attachment; filename="leasemynd-data-export-${new Date().toISOString().slice(0, 10)}.json"`,
       },
     });
   } catch (err) {

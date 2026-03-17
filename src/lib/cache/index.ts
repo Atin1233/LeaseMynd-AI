@@ -50,7 +50,7 @@ export interface CacheOptions {
 const DEFAULT_CONFIG: CacheConfig = {
   provider: 'memory',
   defaultTtl: 3600, // 1 hour
-  keyPrefix: 'leaseai:',
+  keyPrefix: 'leasemynd:',
   maxMemoryEntries: 1000,
 };
 
@@ -455,7 +455,7 @@ export function getCache(): Cache {
       redisUrl: process.env.UPSTASH_REDIS_REST_URL,
       redisToken: process.env.UPSTASH_REDIS_REST_TOKEN,
       defaultTtl: 3600, // 1 hour
-      keyPrefix: 'leaseai:',
+      keyPrefix: 'leasemynd:',
     });
   }
   return cacheInstance;

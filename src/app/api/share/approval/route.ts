@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     if (link.password_hash) {
       const provided = password ?? "";
       const { createHash } = await import("crypto");
-      const secret = process.env.SHARE_LINK_SECRET ?? "leaseai-share-secret";
+      const secret = process.env.SHARE_LINK_SECRET ?? "leasemynd-share-secret";
       const hash = createHash("sha256").update(provided + secret).digest("hex");
       if (hash !== link.password_hash) {
         return NextResponse.json({ error: "Password required" }, { status: 401 });

@@ -19,16 +19,16 @@ export async function sendTeamInviteEmail(params: TeamInviteEmailParams): Promis
   // For now, we'll log it and the API will return the link
   console.log("📧 Team Invite Email (would be sent):", {
     to: inviteEmail,
-    subject: `You've been invited to join ${organizationName} on LeaseAI`,
+    subject: `You've been invited to join ${organizationName} on LeaseMynd`,
     inviteLink,
   });
 
   // TODO: Integrate with email service
   // Example with Resend:
   // await resend.emails.send({
-  //   from: 'LeaseAI <noreply@leaseai.com>',
+  //   from: 'LeaseMynd <noreply@leasemynd.com>',
   //   to: inviteEmail,
-  //   subject: `You've been invited to join ${organizationName} on LeaseAI`,
+  //   subject: `You've been invited to join ${organizationName} on LeaseMynd`,
   //   html: generateInviteEmailHTML(params),
   // });
 
@@ -53,11 +53,11 @@ function generateInviteEmailHTML(params: TeamInviteEmailParams): string {
       
       <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb;">
         <p style="font-size: 16px; margin-bottom: 20px;">
-          <strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on LeaseAI as a <strong>${role}</strong>.
+          <strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on LeaseMynd as a <strong>${role}</strong>.
         </p>
         
         <p style="font-size: 16px; margin-bottom: 30px;">
-          LeaseAI helps teams analyze commercial leases in minutes instead of hours. You'll be able to collaborate on lease reviews, share insights, and make better leasing decisions.
+          LeaseMynd helps teams analyze commercial leases in minutes instead of hours. You'll be able to collaborate on lease reviews, share insights, and make better leasing decisions.
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
@@ -78,7 +78,7 @@ function generateInviteEmailHTML(params: TeamInviteEmailParams): string {
       </div>
       
       <div style="text-align: center; margin-top: 30px; color: #9ca3af; font-size: 12px;">
-        <p>© ${new Date().getFullYear()} LeaseAI. All rights reserved.</p>
+        <p>© ${new Date().getFullYear()} LeaseMynd. All rights reserved.</p>
       </div>
     </body>
     </html>

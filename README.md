@@ -1,10 +1,10 @@
-# PDR AI - Professional Document Reader AI
+# LeaseMynd - AI-Powered Commercial Lease Analysis
 
-A Next.js application that uses advanced AI technology to analyze, interpret, and extract insights from professional documents. Features employee/employer authentication, document upload and management, AI-powered chat, and **comprehensive predictive document analysis** that identifies missing documents, provides recommendations, and suggests related content.
+A Next.js application that uses advanced AI technology to analyze commercial lease agreements. Features employee/employer authentication, lease document upload and management, AI-powered lease analysis with risk scoring, and **comprehensive lease comparison and market benchmarking** that identifies negotiation points, provides recommendations, and helps close deals faster.
 
 ## 🧭 End-to-end workflow (how the features connect)
 
-PDR AI is designed as one connected loop: **capture documents → make them searchable → ask questions → spot gaps → act → learn**.
+LeaseMynd is designed as one connected loop: **upload leases → AI analysis → identify risks → compare to market → negotiate better terms → close deals faster**.
 
 1. **Authenticate & pick a workspace (Employer / Employee)**  
    Clerk handles auth and role-based access so employers can manage documents + employees, while employees can view assigned materials.
@@ -101,7 +101,7 @@ Key API surfaces used by the Study Agent:
 
 ## 🔍 Predictive Document Analysis Deep Dive
 
-The **Predictive Document Analysis** feature is the cornerstone of PDR AI, providing intelligent document management and compliance assistance:
+The **AI-Powered Lease Analysis** feature is the cornerstone of LeaseMynd, providing intelligent lease review and risk assessment:
 
 ### How It Works
 1. **Document Upload**: Upload your professional documents (PDFs, contracts, manuals, etc.)
@@ -130,7 +130,7 @@ The system provides comprehensive analysis including:
 
 ### OCR Processing for Scanned Documents
 
-PDR AI includes optional advanced OCR (Optical Character Recognition) capabilities for processing scanned documents, images, and PDFs with poor text extraction:
+LeaseMynd includes optional advanced OCR (Optical Character Recognition) capabilities for processing scanned lease documents, images, and PDFs with poor text extraction:
 
 #### When to Use OCR
 - **Scanned Documents**: Physical documents that have been scanned to PDF
@@ -690,7 +690,7 @@ Vercel is the recommended platform for Next.js applications:
    npm install -g pm2
    
    # Start the application
-   pm2 start pnpm --name "pdr-ai" -- start
+   pm2 start pnpm --name "leasemynd" -- start
    
    # Save PM2 configuration
    pm2 save
