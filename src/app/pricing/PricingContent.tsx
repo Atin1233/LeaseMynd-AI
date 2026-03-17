@@ -186,7 +186,7 @@ export default function PricingContent() {
                             <div className={styles.ctaContainer}>
                                 <div className={styles.buttonGroup}>
                                     <a 
-                                        href="https://github.com/Deodat-Lawson/pdr_ai_v2" 
+                                        href="https://github.com/Atin1233/LeaseMynd-AI" 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className={`${styles.btn} ${styles.btnOutline} ${styles.btnLg}`}

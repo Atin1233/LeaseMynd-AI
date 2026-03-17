@@ -26,7 +26,7 @@ const teamMembers = [
     image:
       "https://h0xotvuawi.ufs.sh/f/KSLubuOGoQY2NnwtVGR6HJrBbtv7fyQpxVMN4nEGLsh1mcT9",
     email: "tlin56@jh.edu",
-    github: "https://github.com/Deodat-Lawson",
+    github: "https://github.com/Atin1233/LeaseMynd-AI",
     linkedin: "https://www.linkedin.com/in/tlin2004/",
   },
 ];

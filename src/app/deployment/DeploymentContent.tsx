@@ -20,7 +20,7 @@ export default function DeploymentContent() {
                         </p>
                         <div className={styles.heroButtons}>
                             <a 
-                                href="https://github.com/Deodat-Lawson/pdr_ai_v2" 
+                                href="https://github.com/Atin1233/LeaseMynd-AI" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`}
@@ -84,8 +84,8 @@ export default function DeploymentContent() {
                                 <h3 className={styles.stepTitle}>1. Clone the Repository</h3>
                                 <div className={styles.codeBlock}>
                                     <code>
-                                        git clone https://github.com/Deodat-Lawson/pdr_ai_v2.git<br />
-                                        cd pdr_ai_v2
+                                        git clone https://github.com/Atin1233/LeaseMynd-AI.git<br />
+                                        cd LeaseMynd-AI
                                     </code>
                                 </div>
                             </div>
@@ -566,7 +566,7 @@ export default function DeploymentContent() {
                                 </p>
                                 <div className={styles.supportButtons}>
                                     <a 
-                                        href="https://github.com/Deodat-Lawson/pdr_ai_v2/issues" 
+                                        href="https://github.com/Atin1233/LeaseMynd-AI/issues" 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className={`${styles.btn} ${styles.btnOutline}`}
