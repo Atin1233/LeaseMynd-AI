@@ -51,7 +51,7 @@ function SignupFormInner() {
 
     const supabase = createClient();
 
-    // Sign up the user
+    // Sign up the user with redirect to production domain
     const { data: authData, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -59,6 +59,7 @@ function SignupFormInner() {
         data: {
           full_name: fullName,
         },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "https://leasemynd.com"}/auth/confirm`,
       },
     });
 
