@@ -1,9 +1,10 @@
 // @ts-nocheck - Supabase type inference issues
 import { NextResponse } from "next/server";
-import { createClient } from "~/lib/supabase/server";
+import { createClient, createAdminClient } from "~/lib/supabase/server";
 
 export async function POST(request: Request) {
   try {
+    // Use regular client for auth check
     const supabase = await createClient();
     const {
       data: { user },
@@ -29,8 +30,11 @@ export async function POST(request: Request) {
     const defaultPlan = isLocalhost ? "broker" : "single";
     const defaultLimit = defaultPlan === "broker" ? -1 : 5;
 
+    // Use admin client to bypass RLS
+    const adminClient = await createAdminClient();
+
     // Create organization
-    const { data: org, error: orgError } = await supabase
+    const { data: org, error: orgError } = await adminClient
       .from("organizations")
       .insert({
         name,
@@ -49,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     // Update profile with organization
-    const { error: profileError } = await supabase
+    const { error: profileError } = await adminClient
       .from("profiles")
       .update({
         organization_id: org.id,
