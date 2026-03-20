@@ -11,8 +11,8 @@ const Pricing: React.FC = () => {
       <div className="absolute -inset-10 bg-gradient-to-b from-slate-50/50 to-transparent -z-10 rounded-3xl" />
 
       <SectionTitle
-        title="Simple, transparent pricing"
-        subtitle="Choose the plan that fits your needs. All plans include a free first analysis."
+        title="One plan. Three tiers."
+        subtitle="Choose the plan that fits your needs. Start with a 14-day free trial."
       />
 
       <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-3">

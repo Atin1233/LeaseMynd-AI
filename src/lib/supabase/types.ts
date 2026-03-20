@@ -14,7 +14,7 @@ export interface Database {
           id: string;
           name: string;
           slug: string | null;
-          plan: "free" | "single" | "team" | "broker";
+          plan: "single" | "team" | "broker";
           monthly_analysis_limit: number;
           analyses_used_this_month: number;
           billing_cycle_start: string;
@@ -28,7 +28,7 @@ export interface Database {
           id?: string;
           name: string;
           slug?: string | null;
-          plan?: "free" | "single" | "team" | "broker";
+          plan?: "single" | "team" | "broker";
           monthly_analysis_limit?: number;
           analyses_used_this_month?: number;
           billing_cycle_start?: string;
@@ -42,7 +42,7 @@ export interface Database {
           id?: string;
           name?: string;
           slug?: string | null;
-          plan?: "free" | "single" | "team" | "broker";
+          plan?: "single" | "team" | "broker";
           monthly_analysis_limit?: number;
           analyses_used_this_month?: number;
           billing_cycle_start?: string;

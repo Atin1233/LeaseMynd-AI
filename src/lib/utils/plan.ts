@@ -5,9 +5,9 @@
 /**
  * Get the default plan for new organizations
  * In development/localhost, default to broker plan (highest tier)
- * In production, default to free plan
+ * In production, default to single plan (lowest paid tier)
  */
-export function getDefaultPlan(): "free" | "single" | "team" | "broker" {
+export function getDefaultPlan(): "single" | "team" | "broker" {
   // In development/localhost, use broker plan (highest tier with all features)
   if (
     process.env.NODE_ENV === "development" ||
@@ -16,21 +16,18 @@ export function getDefaultPlan(): "free" | "single" | "team" | "broker" {
   ) {
     return "broker";
   }
-  return "free";
+  return "single";
 }
 
 /**
  * Get the default monthly analysis limit for a plan
  */
 export function getDefaultAnalysisLimit(plan: string): number {
-  if (plan === "broker" || plan === "free") {
+  if (plan === "broker") {
     return -1; // Unlimited
   }
   if (plan === "team") {
     return 20;
   }
-  if (plan === "single") {
-    return 5;
-  }
-  return 3; // Default fallback
+  return 5; // Default to single plan
 }

@@ -17,24 +17,6 @@ export function getStripe(): Stripe {
 
 // Pricing Plans Configuration
 export const PLANS = {
-  FREE: {
-    id: "free",
-    name: "Free",
-    description: "Try LeaseAI with limited features",
-    price: 0,
-    priceId: null,
-    features: [
-      "Unlimited lease analyses",
-      "Basic risk scoring",
-      "Email support",
-    ],
-    limits: {
-      analysesPerMonth: -1, // Unlimited
-      teamMembers: 1,
-      apiAccess: false,
-      whiteLabel: false,
-    },
-  },
   SINGLE: {
     id: "single",
     name: "Single",
@@ -112,6 +94,6 @@ export function getPlan(planId: string): Plan | undefined {
 // Get plan limits
 export function getPlanLimits(planId: string) {
   const plan = getPlan(planId);
-  return plan?.limits ?? PLANS.FREE.limits;
+  return plan?.limits ?? PLANS.SINGLE.limits;
 }
 

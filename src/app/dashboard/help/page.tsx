@@ -169,7 +169,7 @@ const apiGuide = [
   },
   {
     title: "Rate Limits",
-    content: "Rate limits by plan: Free/Single ~5–10 analyses per 15 min, Team ~20–30, Broker ~100. Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset. On 429, retry after Retry-After seconds.",
+    content: "Rate limits by plan: Single ~5–10 analyses per 15 min, Team ~20–30, Broker ~100. Headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset. On 429, retry after Retry-After seconds.",
   },
   {
     title: "Webhooks",
@@ -216,7 +216,7 @@ const faqs = [
   },
   {
     question: "How do pricing tiers work?",
-    answer: "We offer Free, Single, Team, and Broker plans with different analysis limits and features. Check the Billing page to see your current plan and upgrade options.",
+    answer: "We offer Single ($149/mo), Team ($399/mo), and Broker ($799/mo) plans with different analysis limits and features. Check the Billing page to see your current plan and upgrade options.",
   },
   {
     question: "Is there a mobile app?",

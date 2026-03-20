@@ -330,13 +330,8 @@ export function createOrgRateLimiter(organizationId: string, config: RateLimitCo
 /**
  * Get rate limit config based on subscription tier
  */
-export function getRateLimitForTier(tier: 'free' | 'single' | 'team' | 'broker'): RateLimitConfig {
+export function getRateLimitForTier(tier: 'single' | 'team' | 'broker'): RateLimitConfig {
   switch (tier) {
-    case 'free':
-      return {
-        maxRequests: 3, // 3 analyses per 15 minutes for free tier
-        windowMs: 15 * 60 * 1000,
-      };
     case 'single':
       return {
         maxRequests: 10, // 10 analyses per 15 minutes

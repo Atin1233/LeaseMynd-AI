@@ -129,7 +129,7 @@ export default function BillingPage() {
     );
   }
 
-  const currentPlan = organization?.plan?.toUpperCase() || "FREE";
+  const currentPlan = organization?.plan?.toUpperCase() || "SINGLE";
   const usagePercent = organization
     ? Math.min(
         100,
@@ -155,7 +155,7 @@ export default function BillingPage() {
           <div>
             <p className="text-sm text-stone-500 mb-1">Current Plan</p>
             <h2 className="text-2xl font-semibold text-stone-900">
-              {PLANS[currentPlan as PlanId]?.name || "Free"} Plan
+              {PLANS[currentPlan as PlanId]?.name || "Single"} Plan
             </h2>
             {organization?.stripe_subscription_status && (
               <span

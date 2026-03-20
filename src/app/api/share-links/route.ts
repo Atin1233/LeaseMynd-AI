@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       .eq("id", profile.organization_id)
       .maybeSingle();
 
-    if (org?.plan !== "broker" && org?.plan !== "free") {
+    if (org?.plan !== "broker") {
       return NextResponse.json(
         { error: "Client sharing is available on Broker plan" },
         { status: 403 }

@@ -95,14 +95,13 @@ export async function POST(request: Request) {
         const organizationId = subscription.metadata?.organization_id;
 
         if (organizationId) {
-          // Downgrade to free plan
+          // Mark subscription as canceled - organization will need to resubscribe
           await supabase
             .from("organizations")
             .update({
-              plan: "free",
               stripe_subscription_id: null,
               stripe_subscription_status: "canceled",
-              monthly_analysis_limit: -1, // Unlimited
+              monthly_analysis_limit: 0, // No analyses allowed until resubscribed
             })
             .eq("id", organizationId);
         }

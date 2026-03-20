@@ -200,12 +200,11 @@ export default function TeamPage() {
 
   const canManageTeam = ["owner", "admin"].includes(currentUserRole);
   const planLimits: Record<string, number> = {
-    free: 1,
     single: 1,
     team: 5,
     broker: 20,
   };
-  const memberLimit = planLimits[organization?.plan || "free"] || 1;
+  const memberLimit = planLimits[organization?.plan || "single"] || 1;
 
   if (loading) {
     return (

@@ -105,8 +105,8 @@ function SignupFormInner() {
       const defaultPlan =
         typeof window !== "undefined" && window.location.hostname.includes("localhost")
           ? "broker"
-          : "free";
-      const defaultLimit = defaultPlan === "broker" || defaultPlan === "free" ? -1 : 3;
+          : "single";
+      const defaultLimit = defaultPlan === "broker" ? -1 : 5;
 
       const { data: org, error: orgError } = await supabase
         .from("organizations")
@@ -356,12 +356,16 @@ function SignupFormInner() {
                 </div>
 
                 <div className="bg-stone-100 rounded-none p-4">
-                  <h3 className="font-medium text-stone-900 mb-2">Free Plan</h3>
+                  <h3 className="font-medium text-stone-900 mb-2">Single Plan - $149/mo</h3>
                   <ul className="text-sm text-stone-600 space-y-1">
-                    <li>• 3 lease analyses per month</li>
+                    <li>• 5 lease analyses per month</li>
                     <li>• AI-powered risk scoring</li>
                     <li>• Clause extraction & explanation</li>
+                    <li>• Standard PDF reports</li>
                   </ul>
+                  <p className="text-xs text-stone-500 mt-2">
+                    You&apos;ll be prompted to enter payment details after signing up.
+                  </p>
                 </div>
 
                 <div className="flex gap-3">

@@ -2,6 +2,8 @@
 
 This guide walks through configuring Stripe for subscription billing (Single $149, Team $399, Broker $799).
 
+**Note:** There is no free plan. All users must subscribe to a paid plan.
+
 ## 1. Create a Stripe Account
 
 1. Sign up at [stripe.com](https://stripe.com)
@@ -87,7 +89,7 @@ Ensure the `organizations` table has Stripe columns. If not, run:
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS stripe_subscription_status TEXT;
-ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
+ALTER TABLE organizations ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'single';
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS monthly_analysis_limit INTEGER DEFAULT -1;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS analyses_used_this_month INTEGER DEFAULT 0;
 ALTER TABLE organizations ADD COLUMN IF NOT EXISTS billing_cycle_start TIMESTAMPTZ;

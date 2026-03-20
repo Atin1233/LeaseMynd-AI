@@ -93,7 +93,7 @@ export async function PUT(request: Request) {
       .eq("id", profile.organization_id)
       .maybeSingle();
 
-    if (org?.plan !== "broker" && org?.plan !== "free") {
+    if (org?.plan !== "broker") {
       return NextResponse.json(
         { error: "White-label branding is available on Broker plan" },
         { status: 403 }

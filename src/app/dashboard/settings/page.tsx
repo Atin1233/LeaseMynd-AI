@@ -83,7 +83,7 @@ export default function SettingsPage() {
             const o = orgData as unknown as Organization;
             setOrg(o);
             setOrgName(o.name || "");
-            if (o.plan === "broker" || o.plan === "free") {
+            if (o.plan === "broker") {
               const res = await fetch("/api/branding");
               const data = await res.json();
               setBranding(data.branding ?? { logo_url: null, primary_color: null, secondary_color: null, custom_domain: null });
@@ -144,8 +144,8 @@ export default function SettingsPage() {
       const defaultPlan =
         typeof window !== "undefined" && window.location.hostname.includes("localhost")
           ? "broker"
-          : "free";
-      const defaultLimit = defaultPlan === "broker" || defaultPlan === "free" ? -1 : 3;
+          : "single";
+      const defaultLimit = defaultPlan === "broker" ? -1 : 5;
 
       const { data: newOrg, error: orgError } = await supabase
         .from("organizations")
@@ -369,7 +369,7 @@ export default function SettingsPage() {
                 Plan
               </label>
               <div className="bg-stone-50 border border-stone-200 rounded-none py-2.5 px-4 text-stone-600 capitalize">
-                {org?.plan || "Free"}
+                {org?.plan || "Single"}
               </div>
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
         </section>
 
         {/* White-label (Broker) */}
-        {(org?.plan === "broker" || org?.plan === "free") && (
+        {org?.plan === "broker" && (
           <section className="bg-white rounded-none border border-stone-200 p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-violet-50 rounded-none flex items-center justify-center">

@@ -97,7 +97,7 @@ export default async function LeaseDetailPage({ params }: PageProps) {
     .select("plan")
     .eq("id", typedProfile.organization_id)
     .maybeSingle();
-  const plan = (org as { plan?: string } | null)?.plan ?? "free";
+  const plan = (org as { plan?: string } | null)?.plan ?? "single";
 
   const isAnalyzed = typedLease.status === "analyzed" && analysis;
   const isPending = typedLease.status === "pending";

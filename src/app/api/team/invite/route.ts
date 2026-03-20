@@ -48,9 +48,9 @@ export async function POST(request: Request) {
 
     if (!organizationId) {
       const defaultPlan =
-        process.env.NODE_ENV === "development" ? "broker" : "free";
+        process.env.NODE_ENV === "development" ? "broker" : "single";
       const defaultLimit =
-        defaultPlan === "broker" || defaultPlan === "free" ? -1 : 3;
+        defaultPlan === "broker" ? -1 : 5;
 
       const { data: org, error: orgError } = await supabase
         .from("organizations")
@@ -143,13 +143,12 @@ export async function POST(request: Request) {
       .eq("organization_id", profile.organization_id);
 
     const planLimits: Record<string, number> = {
-      free: 1,
       single: 1,
       team: 5,
       broker: 20,
     };
 
-    const limit = planLimits[organization?.plan || "free"] || 1;
+    const limit = planLimits[organization?.plan || "single"] || 1;
 
     if ((memberCount || 0) >= limit) {
       return NextResponse.json(

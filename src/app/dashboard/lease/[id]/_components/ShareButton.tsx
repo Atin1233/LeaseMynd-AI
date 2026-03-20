@@ -29,7 +29,7 @@ interface ShareButtonProps {
   plan?: string;
 }
 
-export function ShareButton({ leaseId, plan = "free" }: ShareButtonProps) {
+export function ShareButton({ leaseId, plan = "single" }: ShareButtonProps) {
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [links, setLinks] = useState<ShareLinkRow[]>([]);
@@ -42,7 +42,7 @@ export function ShareButton({ leaseId, plan = "free" }: ShareButtonProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [approvalsByLinkId, setApprovalsByLinkId] = useState<Record<string, string>>({});
 
-  const isBroker = plan === "broker" || plan === "free";
+  const isBroker = plan === "broker";
 
   useEffect(() => {
     if (open && isBroker) loadLinks();
