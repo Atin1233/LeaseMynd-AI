@@ -130,6 +130,7 @@ export default function BillingPage() {
   }
 
   const currentPlan = organization?.plan?.toUpperCase() || "SINGLE";
+  const hasSubscription = !!organization?.stripe_subscription_id;
   const usagePercent = organization
     ? Math.min(
         100,
@@ -157,17 +158,21 @@ export default function BillingPage() {
             <h2 className="text-2xl font-semibold text-stone-900">
               {PLANS[currentPlan as PlanId]?.name || "Single"} Plan
             </h2>
-            {organization?.stripe_subscription_status && (
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium mt-2 ${
-                  organization.stripe_subscription_status === "active"
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-amber-100 text-amber-800"
-                }`}
-              >
-                {organization.stripe_subscription_status}
-              </span>
-            )}
+              {hasSubscription ? (
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium mt-2 ${
+                    organization.stripe_subscription_status === "active"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  {organization.stripe_subscription_status || "active"}
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-none text-xs font-medium mt-2 bg-stone-100 text-stone-600">
+                  Not subscribed
+                </span>
+              )}
           </div>
 
           {organization?.stripe_subscription_id && (
@@ -194,7 +199,7 @@ export default function BillingPage() {
               {organization?.analyses_used_this_month || 0} /{" "}
               {organization?.monthly_analysis_limit === -1
                 ? "Unlimited"
-                : organization?.monthly_analysis_limit === -1 ? "Unlimited" : organization?.monthly_analysis_limit || 3}{" "}
+                : organization?.monthly_analysis_limit || 5}{" "}
               analyses
             </span>
           </div>
@@ -217,7 +222,8 @@ export default function BillingPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Object.entries(PLANS).map(([key, plan]) => {
-            const isCurrentPlan = currentPlan === key;
+            const isCurrentPlan = currentPlan === key && hasSubscription;
+            const isSubscribedPlan = currentPlan === key && !hasSubscription;
             const isUpgrade =
               PLANS[currentPlan as PlanId]?.price < plan.price;
 
@@ -286,6 +292,23 @@ export default function BillingPage() {
                   <div className="text-center text-sm text-stone-500 py-2.5">
                     Your current plan
                   </div>
+                )}
+
+                {isSubscribedPlan && (
+                  <button
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={upgrading === plan.id}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-none font-medium transition-colors disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {upgrading === plan.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        Subscribe
+                      </>
+                    )}
+                  </button>
                 )}
 
                 {!isCurrentPlan && !plan.priceId && (
