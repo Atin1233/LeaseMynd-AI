@@ -24,9 +24,16 @@ export async function POST(request: Request) {
 
     const plan = PLANS[normalizedPlanId as keyof typeof PLANS];
 
+    console.log("Checkout plan:", plan.id, "Price ID:", plan.priceId);
+    console.log("Env vars:", {
+      SINGLE: process.env.STRIPE_SINGLE_PRICE_ID,
+      TEAM: process.env.STRIPE_TEAM_PRICE_ID,
+      BROKER: process.env.STRIPE_BROKER_PRICE_ID,
+    });
+
     if (!plan.priceId) {
       return NextResponse.json(
-        { error: "This plan is not available for purchase" },
+        { error: `Plan ${plan.id} is not available for purchase. Price ID not configured.` },
         { status: 400 }
       );
     }

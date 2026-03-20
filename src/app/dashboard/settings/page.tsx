@@ -140,34 +140,29 @@ export default function SettingsPage() {
         toast.success("Profile updated successfully");
       }
     } else if (orgName) {
-      // In development, use broker plan (highest tier)
-      const defaultPlan =
-        typeof window !== "undefined" && window.location.hostname.includes("localhost")
-          ? "broker"
-          : "single";
-      const defaultLimit = defaultPlan === "broker" ? -1 : 5;
-
-      const { data: newOrg, error: orgError } = await supabase
-        .from("organizations")
-        // @ts-expect-error - Supabase type inference
-        .insert({ name: orgName, plan: defaultPlan, monthly_analysis_limit: defaultLimit })
-        .select()
-        .single();
-      
-      if (orgError) {
-        console.error("Error creating organization:", orgError);
-        toast.error("Failed to create organization", {
-          description: orgError.message || "Please try again",
+      // Use API route to create organization (bypasses RLS)
+      try {
+        const response = await fetch("/api/organization", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: orgName }),
         });
-      } else if (newOrg) {
-        await supabase
-          .from("profiles")
-          // @ts-expect-error - Supabase type inference
-          .update({ organization_id: newOrg.id, role: "owner" })
-          .eq("id", user.id);
-        
-        setOrg(newOrg);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create organization");
+        }
+
+        setOrg(data.organization);
         toast.success("Organization created successfully");
+      } catch (error: any) {
+        console.error("Error creating organization:", error);
+        toast.error("Failed to create organization", {
+          description: error.message || "Please try again",
+        });
+        setSaving(false);
+        return;
       }
     } else {
       toast.success("Profile updated successfully");

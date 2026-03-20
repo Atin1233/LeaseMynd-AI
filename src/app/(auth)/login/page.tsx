@@ -50,7 +50,7 @@ function LoginFormInner() {
         <div className="w-full flex items-center justify-center mt-20 mb-8">
           <Link href="/" className="flex items-center justify-center w-3/4">
             <img
-              src="/mainleasemyndailogo-transparent.png"
+              src="/leasemyndaiapplogo.png"
               alt="LeaseAI"
               className="w-full h-auto object-contain max-w-full"
               style={{
@@ -84,7 +84,7 @@ function LoginFormInner() {
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center mb-10 w-full">
             <img
-              src="/mainleasemyndailogo-transparent.png"
+              src="/leasemyndaiapplogo.png"
               alt="LeaseAI"
               className="w-3/4 h-auto object-contain max-w-full"
               style={{

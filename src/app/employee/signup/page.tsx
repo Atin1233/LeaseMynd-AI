@@ -105,7 +105,7 @@ export default function EmployeeSignupPage() {
         <div className="w-full flex items-center justify-center mt-20 mb-8">
           <Link href="/" className="flex justify-center w-3/4">
             <img
-              src="/mainleasemyndailogo-transparent.png"
+              src="/leasemyndaiapplogo.png"
               alt="LeaseAI"
               className="w-full h-auto object-contain max-w-full"
               style={{ backgroundColor: "transparent", mixBlendMode: "multiply" }}
@@ -129,7 +129,7 @@ export default function EmployeeSignupPage() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex justify-center mb-10 w-full">
             <img
-              src="/mainleasemyndailogo-transparent.png"
+              src="/leasemyndaiapplogo.png"
               alt="LeaseAI"
               className="w-3/4 h-auto object-contain max-w-full"
               style={{ backgroundColor: "transparent", mixBlendMode: "multiply" }}
