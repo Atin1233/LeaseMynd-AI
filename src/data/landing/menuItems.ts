@@ -6,7 +6,7 @@ export const menuItems: IMenuItem[] = [
   { text: "Customers", url: "#testimonials" },
   { text: "Pricing", url: "#pricing" },
   { text: "Now", url: "#ai-assistance" },
-  { text: "Contact", url: "mailto:contact@leasemynd.com" },
+  { text: "Contact", url: "/contact" },
 ];
 
 export const navRightItems = [

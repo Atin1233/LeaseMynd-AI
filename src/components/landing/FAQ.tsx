@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Disclosure,
   DisclosureButton,
@@ -9,7 +10,6 @@ import { BiMinus, BiPlus } from "react-icons/bi";
 import { FiHelpCircle } from "react-icons/fi";
 import SectionTitle from "~/components/landing/SectionTitle";
 import { faqs } from "~/data/landing/faq";
-import { footerDetails } from "~/data/landing/footer";
 
 const FAQ: React.FC = () => {
   return (
@@ -59,14 +59,12 @@ const FAQ: React.FC = () => {
       {/* Contact link centered */}
       <div className="mt-8">
         <p className="text-xs text-slate-400">Still have questions?</p>
-        {footerDetails.email && (
-          <a
-            href={`mailto:${footerDetails.email}`}
-            className="mt-1 block text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            {footerDetails.email}
-          </a>
-        )}
+        <Link
+          href="/contact"
+          className="mt-1 block text-sm font-medium text-slate-600 hover:text-slate-900"
+        >
+          Contact our support team
+        </Link>
       </div>
     </div>
   );
