@@ -112,9 +112,9 @@ const PendingApproval: React.FC = () => {
 
                     <div className={styles.supportSection}>
                         <p className={styles.supportText}>
-                            Need assistance? Contact support at{' '}
-                            <a href="mailto:support@leasemynd.ai" className={styles.supportLink}>
-                                support@leasemynd.ai
+                            Need assistance?{' '}
+                            <a href="/contact" className={styles.supportLink}>
+                                Contact our support team
                             </a>
                         </p>
                     </div>

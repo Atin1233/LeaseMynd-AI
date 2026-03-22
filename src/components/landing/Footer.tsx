@@ -56,14 +56,12 @@ const Footer: React.FC = () => {
 
             <div>
               <h4 className="mb-3 text-xs font-semibold text-slate-900 uppercase tracking-wider">Contact</h4>
-              {footerDetails.email && (
-                <a
-                  href={`mailto:${footerDetails.email}`}
-                  className="block text-xs sm:text-sm text-slate-500 transition-colors hover:text-slate-900"
-                >
-                  {footerDetails.email}
-                </a>
-              )}
+              <Link
+                href="/contact"
+                className="block text-xs sm:text-sm text-slate-500 transition-colors hover:text-slate-900"
+              >
+                Contact Us
+              </Link>
 
               {footerDetails.socials && Object.keys(footerDetails.socials).length > 0 && (
                 <div className="mt-3 flex items-center gap-3">

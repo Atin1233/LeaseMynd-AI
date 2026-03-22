@@ -13,8 +13,9 @@ export const footerDetails: {
     { text: "Features", url: "#features" },
     { text: "Pricing", url: "/pricing" },
     { text: "Testimonials", url: "#testimonials" },
+    { text: "Contact", url: "/contact" },
   ],
-  email: "contact@leasemynd.com",
+  email: "",
   telephone: "",
   socials: {
     linkedin: "https://www.linkedin.com",

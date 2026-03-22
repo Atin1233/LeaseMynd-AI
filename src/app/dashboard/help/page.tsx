@@ -412,8 +412,15 @@ export default function HelpPage() {
           Still need help?
         </h3>
         <p className="text-stone-600 mb-4">
-          Can't find what you're looking for? Reach out to our support team at support@leasemynd.ai
+          Can&apos;t find what you&apos;re looking for? Reach out to our support team.
         </p>
+        <Link
+          href="/contact"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+        >
+          Contact Support
+          <ChevronRight className="w-4 h-4" />
+        </Link>
       </div>
     </div>
   );

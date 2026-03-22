@@ -33,7 +33,7 @@ const Header: React.FC = () => {
     { text: "Customers", url: "#testimonials" },
     { text: "Pricing", url: "#pricing" },
     { text: "AI", url: "#ai-assistance" },
-    { text: "Contact", url: "mailto:contact@leasemynd.com" },
+    { text: "Contact", url: "/contact" },
   ];
 
   return (
