@@ -27,13 +27,13 @@ const CTA: React.FC = () => {
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
             <Link
               href="/signup"
-              className="min-w-[160px] rounded-lg bg-purple-600 px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-purple-700 shadow-lg shadow-purple-200"
+              className="group relative min-w-[160px] sm:min-w-[180px] overflow-hidden rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white shadow-sm transition-all hover:shadow-md hover:scale-[1.02] text-center"
             >
-              Start Free Analysis
+              <span className="relative z-10">Start Free Analysis</span>
             </Link>
             <Link
               href="/login"
-              className="min-w-[160px] rounded-lg border border-slate-300 bg-white px-6 py-2.5 text-sm font-medium text-slate-700 transition-all hover:border-purple-300 hover:text-purple-700"
+              className="min-w-[160px] sm:min-w-[180px] rounded-lg border border-slate-200 bg-white/80 backdrop-blur-sm px-6 py-3 text-sm font-medium text-slate-700 transition-all hover:border-slate-300 hover:bg-white text-center"
             >
               Log in
             </Link>
