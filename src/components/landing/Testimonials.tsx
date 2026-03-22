@@ -13,7 +13,8 @@ const Testimonials: React.FC = () => {
         subtitle="Feedback from commercial real estate professionals testing LeaseMynd"
       />
 
-      <div className="mt-12 grid gap-8 lg:grid-cols-3 relative">
+      {/* Grid: 1 col on mobile, 2 cols on md, 3 cols on lg */}
+      <div className="mt-12 grid gap-6 sm:gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 relative">
         {testimonials.map((testimonial, index) => (
           <div key={index} className="text-left relative">
             {/* Large quote mark decoration */}
@@ -22,7 +23,7 @@ const Testimonials: React.FC = () => {
             </div>
 
             {/* Quote */}
-            <p className="text-base text-slate-600 leading-relaxed">
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
               {testimonial.message}
             </p>
 
@@ -33,7 +34,7 @@ const Testimonials: React.FC = () => {
                 alt={`${testimonial.name} avatar`}
                 width={40}
                 height={40}
-                className="rounded-full object-cover"
+                className="rounded-full object-cover w-10 h-10"
               />
               <div className="ml-3">
                 <h3 className="text-sm font-semibold text-slate-900">

@@ -15,7 +15,8 @@ const Pricing: React.FC = () => {
         subtitle="Choose the plan that fits your needs. Start with a 14-day free trial."
       />
 
-      <div className="mt-12 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* Grid: 1 col on mobile, fit cards on md (centered), 3 cols on lg */}
+      <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-4 lg:gap-4">
         {tiers.map((tier, index) => (
           <PricingColumn
             key={tier.name}

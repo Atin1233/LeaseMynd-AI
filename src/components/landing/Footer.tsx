@@ -9,9 +9,9 @@ import { getPlatformIconByName } from "~/data/landing/utils";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="border-t border-slate-200 py-10">
-      <div className="mx-auto w-full max-w-7xl px-6">
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
+    <footer className="border-t border-slate-200 py-8 sm:py-10">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8 md:gap-12">
           {/* Brand */}
           <div className="max-w-xs">
             <Link href="/" className="flex items-center gap-2">
@@ -20,24 +20,24 @@ const Footer: React.FC = () => {
                 alt={siteDetails.siteName}
                 width={140}
                 height={36}
-                className="h-6 w-auto object-contain"
+                className="h-5 sm:h-6 w-auto object-contain"
               />
             </Link>
-            <p className="mt-3 text-xs text-slate-500 leading-relaxed">
+            <p className="mt-3 text-xs sm:text-sm text-slate-500 leading-relaxed">
               {footerDetails.subheading}
             </p>
           </div>
 
-          {/* Links */}
-          <div className="flex gap-12">
+          {/* Links - Stack on mobile, row on md+ */}
+          <div className="flex flex-row gap-8 sm:gap-12">
             <div>
               <h4 className="mb-3 text-xs font-semibold text-slate-900 uppercase tracking-wider">Product</h4>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {footerDetails.quickLinks.map((link) => (
                   <li key={link.text}>
                     <Link
                       href={link.url}
-                      className="text-xs text-slate-500 transition-colors hover:text-slate-900"
+                      className="text-xs sm:text-sm text-slate-500 transition-colors hover:text-slate-900"
                     >
                       {link.text}
                     </Link>
@@ -46,7 +46,7 @@ const Footer: React.FC = () => {
                 <li>
                   <Link
                     href="/login"
-                    className="text-xs text-slate-500 transition-colors hover:text-slate-900"
+                    className="text-xs sm:text-sm text-slate-500 transition-colors hover:text-slate-900"
                   >
                     Log in
                   </Link>
@@ -59,7 +59,7 @@ const Footer: React.FC = () => {
               {footerDetails.email && (
                 <a
                   href={`mailto:${footerDetails.email}`}
-                  className="block text-xs text-slate-500 transition-colors hover:text-slate-900"
+                  className="block text-xs sm:text-sm text-slate-500 transition-colors hover:text-slate-900"
                 >
                   {footerDetails.email}
                 </a>
