@@ -267,34 +267,13 @@ export default function BillingPage() {
                   ))}
                 </ul>
 
-                {!isCurrentPlan && plan.priceId && (
-                  <button
-                    onClick={() => handleUpgrade(plan.id)}
-                    disabled={upgrading === plan.id}
-                    className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-none font-medium transition-colors disabled:opacity-50 ${
-                      isUpgrade
-                        ? "bg-blue-600 text-white hover:bg-blue-700"
-                        : "border border-stone-300 text-stone-700 hover:bg-stone-50"
-                    }`}
-                  >
-                    {upgrading === plan.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4" />
-                        {isUpgrade ? "Upgrade" : "Switch"}
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {isCurrentPlan && (
-                  <div className="text-center text-sm text-stone-500 py-2.5">
-                    Your current plan
+                {hasSubscription && isCurrentPlan && (
+                  <div className="text-center text-sm text-stone-500 py-2.5 bg-emerald-50 rounded-none">
+                    ✓ Currently subscribed
                   </div>
                 )}
 
-                {isSubscribedPlan && (
+                {!hasSubscription && currentPlan === key && (
                   <button
                     onClick={() => handleUpgrade(plan.id)}
                     disabled={upgrading === plan.id}
@@ -311,10 +290,25 @@ export default function BillingPage() {
                   </button>
                 )}
 
-                {!isCurrentPlan && !plan.priceId && (
-                  <div className="text-center text-sm text-stone-500 py-2.5">
-                    Free tier
-                  </div>
+                {hasSubscription && !isCurrentPlan && (
+                  <button
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={upgrading === plan.id}
+                    className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-none font-medium transition-colors disabled:opacity-50 ${
+                      isUpgrade
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "border border-stone-300 text-stone-700 hover:bg-stone-50"
+                    }`}
+                  >
+                    {upgrading === plan.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        {isUpgrade ? "Upgrade" : "Downgrade"}
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
             );
