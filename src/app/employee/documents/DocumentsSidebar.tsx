@@ -116,7 +116,7 @@ export const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
       <div className={styles.sidebarHeader}>
         <button className={styles.logoContainer}>
           <Brain className={styles.logoIcon} />
-          <span className={styles.logoText}>PDR AI</span>
+          <span className={styles.logoText}>LeaseMynd AI</span>
         </button>
 
         {/* Search Bar */}

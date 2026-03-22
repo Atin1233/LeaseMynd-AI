@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import React from "react";
 import { Check, Terminal, Database, Shield, Zap, Github, ExternalLink } from "lucide-react";
 import styles from "../../styles/deployment.module.css";
@@ -16,23 +15,24 @@ export default function DeploymentContent() {
                             Self-Deployment Guide
                         </h1>
                         <p className={styles.heroDescription}>
-                            Deploy PDR AI on your own infrastructure with complete control and customization
+                            Deploy LeaseMynd AI on your own infrastructure with complete control and customization
                         </p>
                         <div className={styles.heroButtons}>
-                            <a 
-                                href="https://github.com/Atin1233/LeaseMynd-AI" 
-                                target="_blank" 
+                            <a
+                                href="https://github.com/Atin1233/LeaseMynd-AI"
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className={`${styles.btn} ${styles.btnPrimary} ${styles.btnLg}`}
                             >
                                 <Github className={styles.btnIcon} />
                                 View on GitHub
                             </a>
-                            <Link href="/contact">
-                                <button className={`${styles.btn} ${styles.btnOutline} ${styles.btnLg}`}>
-                                    Get Support
-                                </button>
-                            </Link>
+                            <a
+                                href="mailto:support@leasemynd.ai"
+                                className={`${styles.btn} ${styles.btnOutline} ${styles.btnLg}`}
+                            >
+                                Get Support
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -565,20 +565,21 @@ export default function DeploymentContent() {
                                     Having trouble with deployment? Our support team is here to help!
                                 </p>
                                 <div className={styles.supportButtons}>
-                                    <a 
-                                        href="https://github.com/Atin1233/LeaseMynd-AI/issues" 
-                                        target="_blank" 
+                                    <a
+                                        href="https://github.com/Atin1233/LeaseMynd-AI/issues"
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         className={`${styles.btn} ${styles.btnOutline}`}
                                     >
                                         <Github className={styles.btnIcon} />
                                         GitHub Issues
                                     </a>
-                                    <Link href="/contact">
-                                        <button className={`${styles.btn} ${styles.btnPrimary}`}>
-                                            Contact Support
-                                        </button>
-                                    </Link>
+                                    <a
+                                        href="mailto:support@leasemynd.ai"
+                                        className={`${styles.btn} ${styles.btnPrimary}`}
+                                    >
+                                        Contact Support
+                                    </a>
                                 </div>
                             </div>
                         </section>

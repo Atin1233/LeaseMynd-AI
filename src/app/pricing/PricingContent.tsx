@@ -17,7 +17,7 @@ export default function PricingContent() {
                             Open Source & Self-Deployable
                         </h1>
                         <p className={styles.heroDescription}>
-                            Deploy PDR AI with your own API keys - this website serves as a free demo
+                            Deploy LeaseMynd AI with your own API keys - this website serves as a free demo
                         </p>
                     </div>
                 </div>
@@ -65,7 +65,7 @@ export default function PricingContent() {
                                     <span className={styles.price}>Free</span>
                                 </div>
                                 <p className={styles.planDescription}>
-                                    This is a demo version of PDR AI for testing and exploration.
+                                    This is a demo version of LeaseMynd AI for testing and exploration.
                                 </p>
                             </div>
 
@@ -133,7 +133,7 @@ export default function PricingContent() {
                                     <span className={styles.priceSubtext}>with your API keys</span>
                                 </div>
                                 <p className={styles.planDescription}>
-                                    Deploy PDR AI on your own infrastructure with your API keys. This website is a free demo for testing and exploration.
+                                    Deploy LeaseMynd AI on your own infrastructure with your API keys. This website is a free demo for testing and exploration.
                                 </p>
                             </div>
 
@@ -206,7 +206,7 @@ export default function PricingContent() {
 
                 <div className={styles.benefitsSection}>
                     <div className={styles.benefitsContainer}>
-                        <h2 className={styles.benefitsTitle}>Why Choose PDR AI</h2>
+                        <h2 className={styles.benefitsTitle}>Why Choose LeaseMynd AI</h2>
                         <div className={styles.benefitsGrid}>
                             <div className={styles.benefitCard}>
                                 <GraduationCap className={styles.benefitIcon} />

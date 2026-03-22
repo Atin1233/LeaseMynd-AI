@@ -140,7 +140,7 @@ export const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
                     {/* Logo */}
                     <div className={styles.logoContainer}>
                         <Brain className={styles.logoIcon} />
-                        <span className={styles.logoText}>PDR AI</span>
+                        <span className={styles.logoText}>LeaseMynd AI</span>
                     </div>
                     
                     {/* Action Buttons */}

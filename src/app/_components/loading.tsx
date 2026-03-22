@@ -21,7 +21,7 @@ const LoadingPage: React.FC<LoadingPageProps> = ({
                         role="img"
                         aria-label="PDR AI Brain Icon"
                     />
-                    <span className={styles.logoText}>PDR AI</span>
+                        <span className={styles.logoText}>LeaseMynd AI</span>
                 </div>
 
                 <div className={styles.spinnerContainer}>

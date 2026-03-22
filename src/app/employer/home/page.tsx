@@ -8,7 +8,6 @@ import {
   Brain,
   Settings,
   Users,
-  HelpCircle,
   GraduationCap,
 } from "lucide-react";
 import styles from "~/styles/Employer/Home.module.css";
@@ -61,13 +60,6 @@ const menuOptions = [
     path: "/employer/settings",
     isBeta: false,
   },
-  {
-    icon: <HelpCircle className={styles.menuIcon} />,
-    title: "Contact Support",
-    description: "Get help with technical difficulties and questions",
-    path: "/employer/contact",
-    isBeta: false,
-  },
 ];
 
 const HomeScreen = () => {
@@ -100,7 +92,7 @@ const HomeScreen = () => {
         <div className={styles.navContent}>
           <div className={styles.logoContainer}>
             <Brain className={styles.logoIcon} />
-            <span className={styles.logoText}>PDR AI</span>
+                        <span className={styles.logoText}>LeaseMynd AI</span>
           </div>
           <div className={styles.navActions}>
             <ThemeToggle />
@@ -110,7 +102,7 @@ const HomeScreen = () => {
       </nav>
       <main className={styles.main}>
         <div className={styles.welcomeSection}>
-          <h1 className={styles.welcomeTitle}>Welcome to PDR AI</h1>
+          <h1 className={styles.welcomeTitle}>Welcome to LeaseMynd AI</h1>
           <p className={styles.welcomeText}>
             Your AI integrated document management assistant and interpreter.
             Choose an option below to get started.

@@ -12,7 +12,7 @@ export function Navbar() {
                 <div className={styles.navWrapper}>
                     <Link href="/" className={styles.logoContainer}>
                         <Brain className={styles.iconPurple} />
-                        <span className={styles.logoText}>PDR AI</span>
+                        <span className={styles.logoText}>LeaseMynd AI</span>
                     </Link>
                     <div className={styles.navLinks}>
                         <Link href="/">
@@ -28,11 +28,6 @@ export function Navbar() {
                         <Link href="/deployment">
                             <button className={`${styles.btn} ${styles.btnGhost}`}>
                                 Deployment
-                            </button>
-                        </Link>
-                        <Link href="/contact">
-                            <button className={`${styles.btn} ${styles.btnGhost}`}>
-                                Contact
                             </button>
                         </Link>
                         <ThemeToggle />

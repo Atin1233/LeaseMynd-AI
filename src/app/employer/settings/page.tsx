@@ -165,7 +165,7 @@ const SettingsPage = () => {
                 <div className={styles.navContent}>
                     <div className={styles.logoWrapper}>
                         <Brain className={styles.logoIcon} />
-                        <span className={styles.logoText}>PDR AI</span>
+                        <span className={styles.logoText}>LeaseMynd AI</span>
                     </div>
                     <div className={styles.navActions}>
                         <ThemeToggle />
