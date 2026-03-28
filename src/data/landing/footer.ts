@@ -18,7 +18,6 @@ export const footerDetails: {
   email: "hello@leasemynd.com",
   telephone: "",
   socials: {
-    linkedin: "https://www.linkedin.com",
-    twitter: "https://twitter.com",
+    linkedin: "https://www.linkedin.com/company/leasemynd-ai",
   },
 };
