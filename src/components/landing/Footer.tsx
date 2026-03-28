@@ -117,6 +117,14 @@ const Footer: React.FC = () => {
                   Help Center
                 </Link>
               </li>
+              <li>
+                <a
+                  href={`mailto:${footerDetails.email}`}
+                  className="text-sm text-slate-500 transition-colors hover:text-purple-600"
+                >
+                  {footerDetails.email}
+                </a>
+              </li>
             </ul>
           </div>
         </div>

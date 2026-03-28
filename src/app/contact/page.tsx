@@ -65,9 +65,18 @@ export default function ContactPage() {
               <h1 className="text-4xl font-bold text-stone-900 mb-4">
                 Contact Us
               </h1>
-              <p className="text-lg text-stone-600">
+              <p className="text-lg text-stone-600 mb-4">
                 Have questions? We&apos;d love to hear from you.
               </p>
+              <a
+                href="mailto:contact@leasemynd.com"
+                className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                contact@leasemynd.com
+              </a>
             </div>
 
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-purple-100">
