@@ -1,5 +1,4 @@
 "use client";
-// @ts-nocheck - Supabase type inference issues
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -40,8 +39,10 @@ export default function VerifyPasscodePage() {
     }
 
     // Update profile with passcode verification
+    // @ts-ignore - Supabase type inference issue
     const { error: updateError } = await supabase
       .from("profiles")
+      // @ts-ignore - Supabase type inference issue
       .update({ demo_passcode_verified: true })
       .eq("id", user.id);
 
