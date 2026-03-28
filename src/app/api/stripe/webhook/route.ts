@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { getStripe, PLANS } from "~/lib/stripe";
-import { createClient } from "~/lib/supabase/server";
+import { createAdminClient } from "~/lib/supabase/server";
 import type Stripe from "stripe";
 
 export async function POST(request: Request) {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = await createClient(true); // Use admin client
+  const supabase = await createAdminClient(); // Use admin client to bypass RLS
 
   try {
     switch (event.type) {
