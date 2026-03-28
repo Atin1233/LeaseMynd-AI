@@ -15,7 +15,7 @@ export const footerDetails: {
     { text: "Testimonials", url: "#testimonials" },
     { text: "Contact", url: "/contact" },
   ],
-  email: "contact@leasemynd.com",
+  email: "hello@leasemynd.com",
   telephone: "",
   socials: {
     linkedin: "https://www.linkedin.com",
