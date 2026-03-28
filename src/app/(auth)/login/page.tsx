@@ -34,6 +34,25 @@ function LoginFormInner() {
       return;
     }
 
+    // Get current user to check passcode verification
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      // Check if user has verified demo passcode
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("demo_passcode_verified")
+        .eq("id", user.id)
+        .single();
+
+      // If passcode not verified, redirect to verification page
+      if (!profile?.demo_passcode_verified) {
+        router.push("/verify-passcode");
+        router.refresh();
+        return;
+      }
+    }
+
     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (aal?.nextLevel === "aal2" && aal?.currentLevel === "aal1") {
       router.push(`/mfa-verify?redirect=${encodeURIComponent(redirectTo)}`);

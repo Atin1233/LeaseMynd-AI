@@ -161,6 +161,7 @@ export interface Database {
           full_name: string | null;
           role: "owner" | "admin" | "member" | "viewer";
           avatar_url: string | null;
+          demo_passcode_verified: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -171,6 +172,7 @@ export interface Database {
           full_name?: string | null;
           role?: "owner" | "admin" | "member" | "viewer";
           avatar_url?: string | null;
+          demo_passcode_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -181,6 +183,7 @@ export interface Database {
           full_name?: string | null;
           role?: "owner" | "admin" | "member" | "viewer";
           avatar_url?: string | null;
+          demo_passcode_verified?: boolean;
           created_at?: string;
           updated_at?: string;
         };

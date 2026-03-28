@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const code = searchParams.get("code");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = "/dashboard";
+  const next = "/verify-passcode"; // Redirect to passcode verification after email confirmation
 
   const redirectTo = request.nextUrl.clone();
   redirectTo.pathname = next;

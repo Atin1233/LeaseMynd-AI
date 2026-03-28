@@ -142,9 +142,9 @@ function SignupFormInner() {
     setSuccess(true);
     setLoading(false);
 
-    // If email confirmation is disabled, redirect to dashboard
+    // If email confirmation is disabled, redirect to passcode verification
     if (authData.session) {
-      router.push("/dashboard");
+      router.push("/verify-passcode");
       router.refresh();
     }
   };
