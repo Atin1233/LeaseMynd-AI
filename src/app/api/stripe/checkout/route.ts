@@ -5,6 +5,9 @@ import { getStripe, PLANS } from "~/lib/stripe";
 
 export async function POST(request: Request) {
   try {
+    console.log("[Stripe Checkout] Starting checkout process");
+    console.log("[Stripe Checkout] STRIPE_SECRET_KEY exists:", !!process.env.STRIPE_SECRET_KEY);
+    
     const supabase = await createClient();
     const {
       data: { user },
@@ -117,8 +120,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Stripe checkout error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create checkout session" },
+      { error: "Failed to create checkout session", details: errorMessage },
       { status: 500 }
     );
   }
