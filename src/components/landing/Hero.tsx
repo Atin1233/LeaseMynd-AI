@@ -57,6 +57,13 @@ const Hero: React.FC = () => {
           </div>
         </div>
 
+        {/* Legal Disclaimer */}
+        <p className="mx-auto mt-4 max-w-xl text-xs text-slate-400/80 leading-relaxed px-4">
+          LeaseMynd provides AI-powered lease analysis tools for informational purposes only.
+          We are not attorneys and do not provide legal advice. Results should be reviewed by
+          your own legal counsel before making lease decisions.
+        </p>
+
         {/* Product Screenshot - Responsive margins and sizing */}
         <div className="relative mx-auto mt-10 sm:mt-16 w-full max-w-5xl px-2 sm:px-0">
           {/* Soft glow effect */}
